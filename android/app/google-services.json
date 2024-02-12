@@ -1,0 +1,87 @@
+{
+  "project_info": {
+    "project_number": "949266539354",
+    "firebase_url": "https://facedection-89640-default-rtdb.firebaseio.com",
+    "project_id": "facedection-89640",
+    "storage_bucket": "facedection-89640.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:949266539354:android:ea13adb17c6a81b88e0963",
+        "android_client_info": {
+          "package_name": "com.bytx.attendanceapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkgR6-lJXSNj22JIEEf08iPnrOyrccvMk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:949266539354:android:88520d9ad6b498118e0963",
+        "android_client_info": {
+          "package_name": "com.example.FaceNet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkgR6-lJXSNj22JIEEf08iPnrOyrccvMk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:949266539354:android:a8910a7bf3a87bb98e0963",
+        "android_client_info": {
+          "package_name": "com.example.face_auth"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkgR6-lJXSNj22JIEEf08iPnrOyrccvMk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:949266539354:android:a6ccac54a908e9128e0963",
+        "android_client_info": {
+          "package_name": "com.example.realtime_face_recognition"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkgR6-lJXSNj22JIEEf08iPnrOyrccvMk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
