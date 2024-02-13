@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
 import 'package:realtime_face_recognition/Activity/user_details_view.dart';
 import 'package:realtime_face_recognition/Constants/AppConstants.dart';
 import 'package:realtime_face_recognition/Constants/custom_snackbar.dart';
@@ -14,6 +15,7 @@ import 'package:realtime_face_recognition/ML/Recognition.dart';
 import 'package:realtime_face_recognition/ML/Recognizer.dart';
 import 'package:image/image.dart' as img;
 import 'package:realtime_face_recognition/Model/Userattendancemodel.dart';
+
 
 class StaffRecognationPage extends StatefulWidget {
   late List<CameraDescription> cameras;
@@ -47,6 +49,7 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     recognizer = Recognizer();
     //TODO initialize camera footage
     initializeCamera(widget.cameras[1]);
+
     // initCamera(widget.cameras![1]);
   }
 
@@ -361,10 +364,14 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
         body: Container(
             margin: const EdgeInsets.only(top: 0),
             color: Colors.black,
-            child: Stack(
-              children: stackChildren,
-            )),
-      ),
+            child:  Stack(
+            children: [
+                    CameraPreview(controller),
+                    Center(
+                        child: Lottie.asset('assets/animationm.json')),
+            ],
+        ),
+      )),
     );
   }
 }

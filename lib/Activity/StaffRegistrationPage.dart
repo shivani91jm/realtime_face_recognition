@@ -422,8 +422,8 @@ class FaceDetectorPainter extends CustomPainter {
     final double scaleY = size.height / absoluteImageSize.height;
     final Paint paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..color = Colors.indigoAccent;
+      ..strokeWidth = 4.0
+      ..color = Colors.green;
     for (Face face in faces) {
       canvas.drawRect(
         Rect.fromLTRB(

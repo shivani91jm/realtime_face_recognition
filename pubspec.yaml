@@ -46,6 +46,7 @@ dependencies:
   firebase_core: any
   uuid: ^3.0.7
   intl: any
+  lottie: any
 
 
 dev_dependencies:
