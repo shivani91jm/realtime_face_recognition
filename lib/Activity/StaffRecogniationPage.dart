@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:intl/intl.dart';
-import 'package:lottie/lottie.dart';
 import 'package:realtime_face_recognition/Activity/user_details_view.dart';
 import 'package:realtime_face_recognition/Constants/AppConstants.dart';
 import 'package:realtime_face_recognition/Constants/custom_snackbar.dart';
@@ -49,7 +48,6 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     recognizer = Recognizer();
     //TODO initialize camera footage
     initializeCamera(widget.cameras[1]);
-
     // initCamera(widget.cameras![1]);
   }
 
@@ -305,58 +303,58 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     }
 
     //TODO View for displaying the bar to switch camera direction or for registering faces
-    stackChildren.add(Positioned(
-      top: size.height - 140,
-      left: 0,
-      width: size.width,
-      height: 80,
-      child: Card(
-        margin: const EdgeInsets.only(left: 20, right: 20),
-        color: Colors.blue,
-        child: Center(
-          child: Container(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.cached,
-                        color: Colors.white,
-                      ),
-                      iconSize: 40,
-                      color: Colors.black,
-                      onPressed: () {
-                        _toggleCameraDirection();
-                      },
-                    ),
-                    Container(
-                      width: 30,
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.face_retouching_natural,
-                        color: Colors.white,
-                      ),
-                      iconSize: 40,
-                      color: Colors.black,
-                      onPressed: () {
-                        setState(() {
-                          register = true;
-                        });
-                      },
-                    )
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ));
+    // stackChildren.add(Positioned(
+    //   top: size.height - 140,
+    //   left: 0,
+    //   width: size.width,
+    //   height: 80,
+    //   child: Card(
+    //     margin: const EdgeInsets.only(left: 20, right: 20),
+    //     color: Colors.blue,
+    //     child: Center(
+    //       child: Container(
+    //         child: Column(
+    //           mainAxisAlignment: MainAxisAlignment.center,
+    //           crossAxisAlignment: CrossAxisAlignment.center,
+    //           children: [
+    //             Row(
+    //               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    //               children: [
+    //                 IconButton(
+    //                   icon: const Icon(
+    //                     Icons.cached,
+    //                     color: Colors.white,
+    //                   ),
+    //                   iconSize: 40,
+    //                   color: Colors.black,
+    //                   onPressed: () {
+    //                     _toggleCameraDirection();
+    //                   },
+    //                 ),
+    //                 Container(
+    //                   width: 30,
+    //                 ),
+    //                 IconButton(
+    //                   icon: const Icon(
+    //                     Icons.face_retouching_natural,
+    //                     color: Colors.white,
+    //                   ),
+    //                   iconSize: 40,
+    //                   color: Colors.black,
+    //                   onPressed: () {
+    //                     setState(() {
+    //                       register = true;
+    //                     });
+    //                   },
+    //                 )
+    //               ],
+    //             ),
+    //           ],
+    //         ),
+    //       ),
+    //     ),
+    //   ),
+    // ));
 
     return SafeArea(
       child: Scaffold(
@@ -364,14 +362,11 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
         body: Container(
             margin: const EdgeInsets.only(top: 0),
             color: Colors.black,
-            child:  Stack(
-            children: [
-                    CameraPreview(controller),
-                    Center(
-                        child: Lottie.asset('assets/animationm.json')),
-            ],
+            child: Stack(
+              children: stackChildren,
+            )
         ),
-      )),
+      ),
     );
   }
 }

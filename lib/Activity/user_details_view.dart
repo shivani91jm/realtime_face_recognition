@@ -106,7 +106,7 @@ class _UserDetailsViewState extends State<UserDetailsView> {
     var namedate=widget.user.name+date;
     String formattedDate = DateFormat('HH:mm:ss').format(DateTime.now());
     print(""+formattedDate.toString());
-    if(AppContents.status=="2") {
+    if(AppContents.status=="1") {
       UserAttendanceModel userAttendanceModel = UserAttendanceModel(
           name: widget.user.name.toString(),
           punch_in_time: formattedDate,
