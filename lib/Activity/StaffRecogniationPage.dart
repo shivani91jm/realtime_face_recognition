@@ -1,13 +1,19 @@
+import 'dart:developer';
 import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:camera/camera.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+import 'package:intl/intl.dart';
 import 'package:realtime_face_recognition/Activity/user_details_view.dart';
+import 'package:realtime_face_recognition/Constants/AppConstants.dart';
+import 'package:realtime_face_recognition/Constants/custom_snackbar.dart';
 import 'package:realtime_face_recognition/ML/Recognition.dart';
 import 'package:realtime_face_recognition/ML/Recognizer.dart';
 import 'package:image/image.dart' as img;
+import 'package:realtime_face_recognition/Model/Userattendancemodel.dart';
 
 class StaffRecognationPage extends StatefulWidget {
   late List<CameraDescription> cameras;
@@ -110,7 +116,7 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
 
       //TODO pass cropped face to face recognition model
       Recognition recognition = recognizer.recognize(croppedFace!, faceRect);
-      if(recognition.distance>1){
+      if(recognition.distance>0.9){
         recognition.name = "Unknown";
       }
 
@@ -123,16 +129,19 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
               ..stop()
               ..setReleaseMode(ReleaseMode.release)
               ..play(AssetSource("sucessAttendance.m4r"));
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) =>  UserDetailsView(user: recognition,)),);
+               Navigator.pushReplacement(context, MaterialPageRoute(
+                builder: (context) =>
+                    UserDetailsView(user: recognition,)),);
+
           }
 
         }
+      else
+        {
+          CustomSnackBar.errorSnackBar("Unknown User",context);
+        }
 
-      //TODO show face registration dialogue
-      // if(register){
-      //   showFaceRegistrationDialogue(croppedFace!,recognition);
-      //   register = false;
-      // }
+
 
     }
 
@@ -223,11 +232,14 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
 
   // TODO Show rectangles around detected faces
   Widget buildResult() {
-    if (_scanResults == null ||
-        controller == null ||
+    if (controller == null ||
         !controller.value.isInitialized) {
-      return const Center(child: Text('Camera is not initialized'));
+      return const  Center(child: CircularProgressIndicator());
     }
+    if(_scanResults==null)
+      {
+        return const Center(child: Text(""));
+      }
     final Size imageSize = Size(
       controller.value.previewSize!.height,
       controller.value.previewSize!.width,
@@ -361,7 +373,7 @@ class FaceDetectorPainter extends CustomPainter {
   FaceDetectorPainter(this.absoluteImageSize, this.faces, this.camDire2);
 
   final Size absoluteImageSize;
-  final List<Recognition> faces;
+  final List<Face> faces;
   CameraLensDirection camDire2;
 
   @override
@@ -374,30 +386,30 @@ class FaceDetectorPainter extends CustomPainter {
       ..strokeWidth = 2.0
       ..color = Colors.indigoAccent;
 
-    for (Recognition face in faces) {
+    for (Face face in faces) {
       canvas.drawRect(
         Rect.fromLTRB(
           camDire2 == CameraLensDirection.front
-              ? (absoluteImageSize.width - face.location.right) * scaleX
-              : face.location.left * scaleX,
-          face.location.top * scaleY,
+              ? (absoluteImageSize.width - face.boundingBox.right) * scaleX
+              : face.boundingBox.left * scaleX,
+          face.boundingBox.top * scaleY,
           camDire2 == CameraLensDirection.front
-              ? (absoluteImageSize.width - face.location.left) * scaleX
-              : face.location.right * scaleX,
-          face.location.bottom * scaleY,
+              ? (absoluteImageSize.width - face.boundingBox.left) * scaleX
+              : face.boundingBox.right * scaleX,
+          face.boundingBox.bottom * scaleY,
         ),
         paint,
       );
 
-      TextSpan span = TextSpan(
-          style: const TextStyle(color: Colors.white, fontSize: 20),
-          text: "${face.name}  ${face.distance.toStringAsFixed(2)}");
-      TextPainter tp = TextPainter(
-          text: span,
-          textAlign: TextAlign.left,
-          textDirection: TextDirection.ltr);
-      tp.layout();
-      tp.paint(canvas, Offset(face.location.left*scaleX, face.location.top*scaleY));
+      // TextSpan span = TextSpan(
+      //     style: const TextStyle(color: Colors.white, fontSize: 20),
+      //     text: "${face.name}  ${face.distance.toStringAsFixed(2)}");
+      // TextPainter tp = TextPainter(
+      //     text: span,
+      //     textAlign: TextAlign.left,
+      //     textDirection: TextDirection.ltr);
+      // tp.layout();
+      // tp.paint(canvas, Offset(face.location.left*scaleX, face.location.top*scaleY));
     }
 
   }

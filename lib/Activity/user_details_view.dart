@@ -1,8 +1,13 @@
 
 import 'dart:async';
+import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:realtime_face_recognition/Constants/AppConstants.dart';
 import 'package:realtime_face_recognition/ML/Recognition.dart';
+import 'package:realtime_face_recognition/Model/Userattendancemodel.dart';
 import 'package:realtime_face_recognition/main.dart';
 
 
@@ -15,22 +20,23 @@ class UserDetailsView extends StatefulWidget {
 }
 
 class _UserDetailsViewState extends State<UserDetailsView> {
- // StaffAttendanceController controller=Get.put(StaffAttendanceController());
+
   Timer? _timer;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-   // controller.allstaffAttendance(widget.user.image.toString(),widget.user.id.toString(),widget.user.salaryType.toString(),widget.user.name.toString());
-    // Example: Start a timer
-    _timer = Timer.periodic(Duration(seconds: 2), (timer) {
-      // Check if the state is still mounted before calling setState
-      if (mounted) {
-        setState(() {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyApp()),);
-        });
-      }
-    });
+
+    userprofileattendance();
+
+    // _timer = Timer.periodic(Duration(seconds: 2), (timer) {
+    //   // Check if the state is still mounted before calling setState
+    //   if (mounted) {
+    //     setState(() {
+    //
+    //     });
+    //   }
+    // });
   }
   @override
   Widget build(BuildContext context) {
@@ -93,5 +99,39 @@ class _UserDetailsViewState extends State<UserDetailsView> {
         ),
       ),
     );
+  }
+
+  void userprofileattendance() async{
+    var date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    var namedate=widget.user.name+date;
+    String formattedDate = DateFormat('HH:mm:ss').format(DateTime.now());
+    print(""+formattedDate.toString());
+    if(AppContents.status=="2") {
+      UserAttendanceModel userAttendanceModel = UserAttendanceModel(
+          name: widget.user.name.toString(),
+          punch_in_time: formattedDate,
+          punch_out_time: '');
+
+      FirebaseFirestore.instance
+          .collection("attendance")
+          .doc(namedate)
+          .set(userAttendanceModel.toJson())
+          .catchError((e) {
+        log("Inseted: $e");
+        Navigator.of(context).pop();
+      }).whenComplete(() {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyApp()),);
+      });
+    }
+    else {
+      FirebaseFirestore.instance
+          .collection("attendance")
+          .doc(namedate)
+          .update({'punch_out_time' : formattedDate}) // <-- Nested value
+          .then((_) =>
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyApp()),))
+          .catchError((error) => print('Failed: $error'));
+
+    }
   }
 }

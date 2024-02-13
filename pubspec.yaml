@@ -45,6 +45,7 @@ dependencies:
   audioplayers: any
   firebase_core: any
   uuid: ^3.0.7
+  intl: any
 
 
 dev_dependencies:

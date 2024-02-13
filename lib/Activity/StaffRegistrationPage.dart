@@ -110,7 +110,7 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
 
       //TODO pass cropped face to face recognition model
       Recognition recognition = recognizer.recognize(croppedFace!, faceRect);
-      if(recognition.distance>1){
+      if(recognition.distance>1.15){
         recognition.name = "Unknown";
       }
       recognitions.add(recognition);
@@ -123,8 +123,11 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
 
     }
     setState(() {
-      isBusy  = false;
-      _scanResults = recognitions;
+     if(mounted)
+       {
+         isBusy  = false;
+         _scanResults = recognitions;
+       }
     });
 
   }
@@ -172,13 +175,16 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
 
                     }).whenComplete(() {
                       textEditingController.text = "";
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => MyApp()));
+                      Navigator.pop(context);
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyApp()));
                     });
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       content: Text("Face Registered"),
                     ));
-                  },style: ElevatedButton.styleFrom(primary:Colors.blue,minimumSize: const Size(200,40)),
-                  child: const Text("Register"))
+                  },
+                  style: ElevatedButton.styleFrom(primary:Colors.blue,minimumSize: const Size(200,40)),
+                  child: const Text("Register")
+              )
             ],
           ),
         ),contentPadding: EdgeInsets.zero,
@@ -271,8 +277,9 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
     if (_scanResults == null ||
         controller == null ||
         !controller.value.isInitialized) {
-      return const Center(child: Text('Camera is not initialized'));
+      return const Center(child: CircularProgressIndicator());
     }
+
     final Size imageSize = Size(
       controller.value.previewSize!.height,
       controller.value.previewSize!.width,
@@ -296,7 +303,7 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
     setState(() {
       controller;
     });
-    initializeCamera(widget.cameras[0]);
+    initializeCamera(widget.cameras[1]);
   }
 
   @override

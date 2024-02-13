@@ -17,7 +17,8 @@ class Recognizer {
   Map<String,Recognition> registered = Map();
   @override
   String get modelName => 'assets/mobile_face_net.tflite';
-
+  final FirebaseService firebaseService = FirebaseService();
+  List<User>? users;
   Recognizer({int? numThreads}) {
     _interpreterOptions = InterpreterOptions();
 
@@ -30,6 +31,7 @@ class Recognizer {
 
   initDB() async {
     await dbHelper.init();
+   users=await firebaseService.fetchDataFromFirestore();
     loadRegisteredFaces();
   }
 
@@ -46,14 +48,14 @@ class Recognizer {
    //    registered.putIfAbsent(name, () => recognition);
    //    print("R="+name);
    //  }
-    final FirebaseService firebaseService = FirebaseService();
-    List<User> users = await firebaseService.fetchDataFromFirestore();
-    for(int i=0;i<users.length;i++)
+
+  //  List<User> users = await firebaseService.fetchDataFromFirestore();
+    for(int i=0;i<users!.length;i++)
       {
-             String name = users[i].user;
+             String name = users![i].user;
            // List<double> embd = users[i].modelData;
           //   List<double> doubleList = users[i].modelData.map((dynamic value) => value.toDouble()).toList();
-             List<double> embd = users[i].modelData
+             List<double> embd = users![i].modelData
                  .map((dynamic value) {
                if (value is num) {
                  return value.toDouble();
