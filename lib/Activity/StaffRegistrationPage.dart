@@ -52,7 +52,10 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
     controller = CameraController(cameraDescription, ResolutionPreset.high);
     try {
       await controller.initialize().then((_) {
-        if (!mounted) return;
+        if (!mounted) {
+          return;
+        }
+        setState(() {});
         controller.startImageStream((image) async {
           if(!isBusy)
           {
@@ -274,10 +277,14 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
 
   // TODO Show rectangles around detected faces
   Widget buildResult() {
-    if (_scanResults == null ||
+    if  (
         controller == null ||
         !controller.value.isInitialized) {
       return const Center(child: CircularProgressIndicator());
+    }
+    if(_scanResults == null)
+    {
+      return const Center(child: Text(""));
     }
 
     final Size imageSize = Size(

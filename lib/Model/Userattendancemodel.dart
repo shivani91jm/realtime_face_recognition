@@ -4,11 +4,13 @@ class UserAttendanceModel {
   var name;
   var punch_in_time;
   var punch_out_time;
+  var flag;
 
   UserAttendanceModel({
      this.name,
      this.punch_in_time,
      this.punch_out_time,
+    this.flag,
   });
 
   static UserAttendanceModel fromMap(Map<String, dynamic> user) {
@@ -16,6 +18,7 @@ class UserAttendanceModel {
       name: user['name'],
         punch_in_time: user['punch_in_time'],
         punch_out_time: user['punch_out_time'],
+      flag: user['flag'],
     );
   }
 
@@ -25,13 +28,15 @@ class UserAttendanceModel {
         name: user['name'],
         punch_in_time: user['punch_in_time'],
         punch_out_time: user['punch_out_time'],
+          flag: user['flag'],
     );
   }
   Map<String, dynamic> toJson() {
     return {
       'name': name,
       'punch_in_time':punch_in_time,
-      'punch_out_time':punch_out_time
+      'punch_out_time':punch_out_time,
+      'flag':flag,
     };
   }
 
@@ -39,7 +44,8 @@ class UserAttendanceModel {
     return {
       'name': name,
       'punch_in_time':punch_in_time,
-      'punch_out_time':punch_out_time
+      'punch_out_time':punch_out_time,
+      'flag':flag
     };
   }
 

@@ -65,7 +65,7 @@ class Recognizer {
                }
              })
                  .toList();
-            Recognition recognition = Recognition(name,Rect.zero,embd,0);
+            Recognition recognition = Recognition(name,Rect.zero,embd,0,"false");
            registered.putIfAbsent(name, () => recognition);
             print("R="+name);
       }
@@ -133,12 +133,12 @@ class Recognizer {
      Pair pair = findNearest(outputArray);
      print("distance= ${pair.distance}");
 
-     return Recognition(pair.name,location,outputArray,pair.distance);
+     return Recognition(pair.name,location,outputArray,pair.distance,pair.flag);
   }
 
   //TODO  looks for the nearest embeeding in the database and returns the pair which contain information of registered face with which face is most similar
   findNearest(List<double> emb){
-    Pair pair = Pair("Unknown", -5);
+    Pair pair = Pair("Unknown", -5,"false");
     for (MapEntry<String, Recognition> item in registered.entries) {
       final String name = item.key;
       List<double> knownEmb = item.value.embeddings;
@@ -165,7 +165,8 @@ class Recognizer {
 class Pair{
    String name;
    double distance;
-   Pair(this.name,this.distance);
+   String flag;
+   Pair(this.name,this.distance,this.flag);
 }
 
 

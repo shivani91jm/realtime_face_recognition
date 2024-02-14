@@ -14,6 +14,7 @@ import 'package:realtime_face_recognition/ML/Recognition.dart';
 import 'package:realtime_face_recognition/ML/Recognizer.dart';
 import 'package:image/image.dart' as img;
 import 'package:realtime_face_recognition/Model/Userattendancemodel.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class StaffRecognationPage extends StatefulWidget {
@@ -91,13 +92,15 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     InputImage inputImage = getInputImage();
     //TODO pass InputImage to face detection model and detect faces
     List<Face> faces = await faceDetector.processImage(inputImage);
-
+setState(() {
+      if(mounted) {
+        _scanResults = faces;
+       // isBusy = false;
+      }
+    });
     //TODO perform face recognition on detected faces
     performFaceRecognition(faces);
-    // setState(() {
-    //   _scanResults = faces;
-    //   isBusy = false;
-    // });
+
   }
 
   img.Image? image;
@@ -132,14 +135,20 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
               ..play(AssetSource("sucessAttendance.m4r"));
                Navigator.pushReplacement(context, MaterialPageRoute(
                 builder: (context) =>
-                    UserDetailsView(user: recognition,)),);
-
+                    UserDetailsView(user: recognition,)),
+               );
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('page', '1');
           }
 
         }
       else
         {
-          CustomSnackBar.errorSnackBar("Unknown User",context);
+          if(mounted)
+            {
+              CustomSnackBar.errorSnackBar("Unknown User",context);
+
+            }
         }
 
 
@@ -156,13 +165,10 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
   img.Image convertYUV420ToImage(CameraImage cameraImage) {
     final width = cameraImage.width;
     final height = cameraImage.height;
-
     final yRowStride = cameraImage.planes[0].bytesPerRow;
     final uvRowStride = cameraImage.planes[1].bytesPerRow;
     final uvPixelStride = cameraImage.planes[1].bytesPerPixel!;
-
     final image = img.Image(width:width, height:height);
-
     for (var w = 0; w < width; w++) {
       for (var h = 0; h < height; h++) {
         final uvIndex =
@@ -263,12 +269,14 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     await controller.stopImageStream();
     setState(() {
       controller;
+      isBusy  = false;
     });
     initializeCamera(widget.cameras[1]);
   }
 
   @override
   Widget build(BuildContext context) {
+
     List<Widget> stackChildren = [];
     size = MediaQuery.of(context).size;
     if (controller != null) {
@@ -358,6 +366,22 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
 
     return SafeArea(
       child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.amber,
+          actions: [
+                           IconButton(
+                            icon: const Icon(
+                              Icons.cached,
+                              color: Colors.white,
+                            ),
+                            iconSize: 40,
+                            color: Colors.black,
+                            onPressed: () {
+                              _toggleCameraDirection();
+                            },
+                          ),
+          ],
+        ),
         backgroundColor: Colors.black,
         body: Container(
             margin: const EdgeInsets.only(top: 0),

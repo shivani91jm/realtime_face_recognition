@@ -9,6 +9,7 @@ import 'package:realtime_face_recognition/Constants/AppConstants.dart';
 import 'package:realtime_face_recognition/ML/Recognition.dart';
 import 'package:realtime_face_recognition/Model/Userattendancemodel.dart';
 import 'package:realtime_face_recognition/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class UserDetailsView extends StatefulWidget {
@@ -106,32 +107,48 @@ class _UserDetailsViewState extends State<UserDetailsView> {
     var namedate=widget.user.name+date;
     String formattedDate = DateFormat('HH:mm:ss').format(DateTime.now());
     print(""+formattedDate.toString());
+
+
+
+    final prefs = await SharedPreferences.getInstance();
+
+     var page=await prefs.getString('page')??"";
+     print("page value "+page.toString());
+
     if(AppContents.status=="1") {
-      UserAttendanceModel userAttendanceModel = UserAttendanceModel(
-          name: widget.user.name.toString(),
-          punch_in_time: formattedDate,
-          punch_out_time: '');
 
-      FirebaseFirestore.instance
-          .collection("attendance")
-          .doc(namedate)
-          .set(userAttendanceModel.toJson())
-          .catchError((e) {
-        log("Inseted: $e");
-        Navigator.of(context).pop();
-      }).whenComplete(() {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyApp()),);
-      });
-    }
-    else {
-      FirebaseFirestore.instance
-          .collection("attendance")
-          .doc(namedate)
-          .update({'punch_out_time' : formattedDate}) // <-- Nested value
-          .then((_) =>
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyApp()),))
-          .catchError((error) => print('Failed: $error'));
+        FirebaseFirestore.instance
+            .collection("attendance")
+            .doc(namedate)
+            .update({'punch_out_time': formattedDate}) // <-- Nested value
+            .then((_) =>
+            Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => MyApp()),))
+            .catchError((error) => print('Failed: $error'));
+
+        UserAttendanceModel userAttendanceModel = UserAttendanceModel(
+            name: widget.user.name.toString(),
+            punch_in_time: formattedDate,
+            punch_out_time: '',
+            flag: "false");
+
+        FirebaseFirestore.instance
+            .collection("attendance")
+            .doc(namedate)
+            .set(userAttendanceModel.toJson())
+            .catchError((e) {
+          log("Inseted: $e");
+          Navigator.of(context).pop();
+        }).whenComplete(() {
+
+
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyApp()),);
+
+        });
 
     }
+
+
+
   }
 }
