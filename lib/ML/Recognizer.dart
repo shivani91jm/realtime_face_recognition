@@ -1,13 +1,21 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:image/image.dart' as img;
+import 'package:realtime_face_recognition/Controller/StaffListController.dart';
 import 'package:realtime_face_recognition/DB/FirebaseService.dart';
+import 'package:realtime_face_recognition/Model/StaffList/Data.dart';
+import 'package:realtime_face_recognition/Model/StaffList/StaffListModel.dart';
 import 'package:realtime_face_recognition/Model/usermodel.dart';
+import 'package:realtime_face_recognition/Utils/Urils.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import '../DB/DatabaseHelper.dart';
 import 'Recognition.dart';
-
+import 'package:http/http.dart' as http;
 class Recognizer {
   late Interpreter interpreter;
   late InterpreterOptions _interpreterOptions;
@@ -18,7 +26,7 @@ class Recognizer {
   @override
   String get modelName => 'assets/mobile_face_net.tflite';
   final FirebaseService firebaseService = FirebaseService();
-  List<User>? users;
+  List<Data>? users;
   Recognizer({int? numThreads}) {
     _interpreterOptions = InterpreterOptions();
 
@@ -31,10 +39,58 @@ class Recognizer {
 
   initDB() async {
     await dbHelper.init();
-   users=await firebaseService.fetchDataFromFirestore();
-    loadRegisteredFaces();
-  }
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        var url= Urls.staffListUrl;
+        print("res body"+url.toString());
+        final response = await http.get(Uri.parse(url), headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',},);
+        print("response"+response.body.toString());
+        if (response.statusCode == 200) {
 
+          StaffListModel res =StaffListModel.fromJson(jsonDecode(response.body));
+          print("vdbvsbd"+res.toString());
+          if(res!=null)
+          {
+            var info= res.success;
+
+            if(info==true)
+            {
+              users=res.data;
+
+            }
+            loadRegisteredFaces();
+
+          }
+        }
+        else if (response.statusCode == 401) {
+
+          print("data" + response.body.toString());
+
+          // Navigator.push(context!, MaterialPageRoute(builder: (context) => LoginPage()),);
+        }
+        else if (response.statusCode == 500) {
+
+          print("data" + response.body.toString());
+        }
+        else {
+
+          print("data" + response.body.toString());
+
+        }
+      }
+
+    }
+    on SocketException catch (_) {
+
+    }
+    StaffListController controller=Get.put(StaffListController());
+    controller.showStaffListController();
+  // users=await firebaseService.fetchDataFromFirestore();
+
+
+  }
   void loadRegisteredFaces() async {
     registered.clear();
     final allRows = await dbHelper.queryAllRows();
@@ -52,26 +108,27 @@ class Recognizer {
   //  List<User> users = await firebaseService.fetchDataFromFirestore();
     for(int i=0;i<users!.length;i++)
       {
-             String name = users![i].user;
+             String name = users![i].name.toString();
            // List<double> embd = users[i].modelData;
-          //   List<double> doubleList = users[i].modelData.map((dynamic value) => value.toDouble()).toList();
-             List<double> embd = users![i].modelData
-                 .map((dynamic value) {
-               if (value is num) {
-                 return value.toDouble();
-               } else {
-                 // Handle the case where the value is not a number, e.g., return a default value or handle the error.
-                 return 0.0; // Replace with your handling logic.
-               }
-             })
-                 .toList();
+              List<double> embd = parseStringToList(users![i].faceModel);
+
+
+             print(embd);
             Recognition recognition = Recognition(name,Rect.zero,embd,0,"false");
            registered.putIfAbsent(name, () => recognition);
             print("R="+name);
       }
 
   }
+  List<double> parseStringToList(String str) {
+    // Remove brackets [ and ]
+    String numbersString = str.substring(1, str.length - 1);
 
+    // Split the string by commas and parse each substring into a double
+    List<double> numbers = numbersString.split(',').map((e) => double.tryParse(e.trim()) ?? 0.0).toList();
+
+    return numbers;
+  }
   void registerFaceInDB(String name, List<double> embedding) async {
     // row to insert
     Map<String, dynamic> row = {

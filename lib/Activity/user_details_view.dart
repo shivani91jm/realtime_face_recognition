@@ -140,8 +140,6 @@ class _UserDetailsViewState extends State<UserDetailsView> {
           log("Inseted: $e");
           Navigator.of(context).pop();
         }).whenComplete(() {
-
-
           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyApp()),);
 
         });

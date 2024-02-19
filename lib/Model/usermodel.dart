@@ -23,14 +23,12 @@ class User {
   factory User.fromJson(Map<String, dynamic> user) {
     return User(
       user: user['user'],
-
       modelData: jsonDecode(user['model_data']),
     );
   }
   Map<String, dynamic> toJson() {
     return {
       'user': user,
-
       'model_data': jsonEncode(modelData),
     };
   }
@@ -38,7 +36,6 @@ class User {
   toMap() {
     return {
       'user': user,
-
       'model_data': jsonEncode(modelData),
     };
   }

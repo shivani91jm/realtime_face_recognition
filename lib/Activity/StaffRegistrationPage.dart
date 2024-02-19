@@ -4,7 +4,9 @@ import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+import 'package:realtime_face_recognition/Controller/RegistrationController.dart';
 import 'package:realtime_face_recognition/ML/Recognition.dart';
 import 'package:realtime_face_recognition/ML/Recognizer.dart';
 import 'package:image/image.dart' as img;
@@ -26,7 +28,7 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
   late CameraDescription description = widget.cameras[1];
   CameraLensDirection camDirec = CameraLensDirection.front;
   late List<Recognition> recognitions = [];
-
+  RegistrationController regcontroller =Get.put(RegistrationController());
   //TODO declare face detector
   late FaceDetector faceDetector;
 
@@ -161,29 +163,37 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
                   onPressed: () {
                     recognizer.registerFaceInDB(textEditingController.text, recognition.embeddings);
 
-                  //  Navigator.pop(context);
+
                     String userId = Uuid().v1();
                     User userToSave = User(
                       user: textEditingController.text,
                       modelData: recognition.embeddings,
                     );
-                    FirebaseFirestore.instance
-                        .collection("users")
-                        .doc(userId)
-                        .set(userToSave.toJson())
-                        .catchError((e) {
-                      log("Registration Error: $e");
-                      Navigator.of(context).pop();
+                    regcontroller.addStaff(textEditingController.text,recognition.embeddings);
+                    Navigator.pop(context);
+                    // FirebaseFirestore.instance
+                    //     .collection("users")
+                    //     .doc(userId)
+                    //     .set(userToSave.toJson())
+                    //     .catchError((e) {
+                    //   log("Registration Error: $e");
+                    //   Navigator.of(context).pop();
+                    //
+                    //
+                    // }).whenComplete(() {
+                    //   textEditingController.text = "";
+                    //   Navigator.pop(context);
+                    //   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyApp()));
+                    // });
+                    // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    //   content: Text("Face Registered"),
+                    // ));
 
 
-                    }).whenComplete(() {
-                      textEditingController.text = "";
-                      Navigator.pop(context);
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyApp()));
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text("Face Registered"),
-                    ));
+
+
+
+
                   },
                   style: ElevatedButton.styleFrom(primary:Colors.blue,minimumSize: const Size(200,40)),
                   child: const Text("Register")
@@ -429,7 +439,7 @@ class FaceDetectorPainter extends CustomPainter {
     final double scaleY = size.height / absoluteImageSize.height;
     final Paint paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.0
+      ..strokeWidth = 3.0
       ..color = Colors.green;
     for (Face face in faces) {
       canvas.drawRect(

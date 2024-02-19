@@ -46,9 +46,12 @@ dependencies:
   firebase_core: any
   uuid: ^3.0.7
   intl: any
-  lottie: any
+
   shared_preferences: any
   permission_handler: any
+  get: any
+  http: any
+  provider: any
 
 
 dev_dependencies:
@@ -77,6 +80,7 @@ flutter:
   assets:
     - images/
     - assets/
+    - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

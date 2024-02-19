@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:image/image.dart' as img;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:realtime_face_recognition/Activity/SplashScreen.dart';
 import 'package:realtime_face_recognition/Activity/StaffRecogniationPage.dart';
 import 'package:realtime_face_recognition/Activity/StaffRegistrationPage.dart';
 
@@ -20,7 +21,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: MyHomePage(),
+      debugShowCheckedModeBanner: false,
+      home: SplashScreen(),
     );
   }
 }
@@ -64,7 +66,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     );
   }
-  void camerapermission() async{
+  void camerapermission() async {
     final status = await permissionCamera.request();
     if (status.isGranted) {
       // Open the camera

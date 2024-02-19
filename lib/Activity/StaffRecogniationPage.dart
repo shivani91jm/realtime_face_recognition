@@ -92,11 +92,11 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     InputImage inputImage = getInputImage();
     //TODO pass InputImage to face detection model and detect faces
     List<Face> faces = await faceDetector.processImage(inputImage);
-setState(() {
-      if(mounted) {
+     setState(() {
+
         _scanResults = faces;
        // isBusy = false;
-      }
+
     });
     //TODO perform face recognition on detected faces
     performFaceRecognition(faces);
@@ -156,9 +156,9 @@ setState(() {
     }
 
     // setState(() {
-    //   isBusy  = false;
-    //   _scanResults = recognitions;
-    // });
+    // //   isBusy  = false;
+    //    _scanResults = recognitions;
+    //  });
 
   }
   // TODO method to convert CameraImage to Image
@@ -259,19 +259,20 @@ setState(() {
 
   //TODO toggle camera direction
   void _toggleCameraDirection() async {
-    if (camDirec == CameraLensDirection.back) {
-      camDirec = CameraLensDirection.front;
-      description = widget.cameras[1];
-    } else {
-      camDirec = CameraLensDirection.back;
-      description = widget.cameras[0];
-    }
-    await controller.stopImageStream();
+    // if (camDirec == CameraLensDirection.back) {
+    //   camDirec = CameraLensDirection.front;
+    //   description = widget.cameras[1];
+    // } else {
+    //   camDirec = CameraLensDirection.back;
+    //   description = widget.cameras[0];
+    // }
+    // await controller.stopImageStream();
+
+    initializeCamera(widget.cameras[1]);
     setState(() {
-      controller;
+     // controller;
       isBusy  = false;
     });
-    initializeCamera(widget.cameras[1]);
   }
 
   @override
@@ -409,8 +410,8 @@ class FaceDetectorPainter extends CustomPainter {
 
     final Paint paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..color = Colors.indigoAccent;
+      ..strokeWidth = 3.0
+      ..color = Colors.green;
 
     for (Face face in faces) {
       canvas.drawRect(
