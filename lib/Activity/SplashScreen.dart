@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:realtime_face_recognition/Activity/DashboardPage.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,12 +14,12 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    // Timer(const Duration(seconds: 3), ()=>Navigator.pushReplacement(context,
-    //     MaterialPageRoute(builder: (context) =>
-    //         const HomeScreen()
-    //         )
-    //     )
-    // );
+    Timer(const Duration(seconds: 1), ()=>Navigator.pushReplacement(context,
+        MaterialPageRoute(builder: (context) =>
+            const DashBoard()
+            )
+        )
+    );
   }
   @override
   Widget build(BuildContext context) {
@@ -49,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ],
             ),
 
-            const CircularProgressIndicator(valueColor:  AlwaysStoppedAnimation<Color>(Colors.orange),),
+            const CircularProgressIndicator(valueColor:  AlwaysStoppedAnimation<Color>(Colors.white),),
           ],
         ),
       ),

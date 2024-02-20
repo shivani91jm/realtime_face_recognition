@@ -5,8 +5,8 @@ class Data {
   String? registrationDate;
   String? registrationTime;
 
-  Data(
-      {this.id,
+  Data({
+        this.id,
         this.name,
         this.faceModel,
         this.registrationDate,

@@ -3,69 +3,57 @@ import 'dart:io';
 
 
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import 'package:realtime_face_recognition/Activity/DashboardPage.dart';
+import 'package:realtime_face_recognition/Activity/SettingPage.dart';
 import 'package:realtime_face_recognition/Constants/custom_snackbar.dart';
 import 'package:realtime_face_recognition/Utils/Urils.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:realtime_face_recognition/main.dart';
+
 
 class RegistrationController extends GetxController{
   RxBool isLoading=false.obs;
   BuildContext? context=Get.context;
-  void addStaff(String name,List<dynamic> facemodel) async
+  void addStaff(String name,List<dynamic> facemodel, BuildContext context) async
   {
+    isLoading.value=true;
     print("name"+name.toString());
     print("arra"+facemodel.toString());
 
     try {
       final result = await InternetAddress.lookup('google.com');
       if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        String formattedDate = DateFormat('HH:mm:ss').format(DateTime.now());
+        print(""+formattedDate.toString());
 
-
-var url= Urls.BaseUrls+'facerecognition/get_data.php?name=${name}&face_model=${facemodel}';
+var url= Urls.BaseUrls+'facerecognition/get_data.php?name=${name}&face_model=${facemodel}&time=${formattedDate}';
         print("res body"+url.toString());
         final response = await http.get(Uri.parse(url), headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',},
-
-        );
+          'Content-Type': 'application/json; charset=UTF-8',},);
         print("response"+response.body.toString());
         if (response.statusCode == 200) {
           isLoading.value=false;
-       //   LeaveCatAddModel res =LeaveCatAddModel.fromJson(jsonDecode(response.body));
-         // print("vdbvsbd"+res.response.toString());
-         //  if(res!=null)
-         //  {
-         //    var info= res.response;
-         //    var msg=res.msg;
-         //    if(info=="true")
-         //    {
-         //      // Fluttertoast.showToast(
-         //      //     msg:" Add Successfully",
-         //      //     toastLength: Toast.LENGTH_SHORT,
-         //      //     gravity: ToastGravity.CENTER,
-         //      //     timeInSecForIosWeb: 1,
-         //      //     backgroundColor: AppColors.drakColorTheme,
-         //      //     textColor: AppColors.white,
-         //      //     fontSize: AppSize.medium
-         //      // );
-         //      // Navigator.pushNamed(context!, RoutesNamess.businessmandashboard);
-         //      // showStaffLeaveCat();
-         //    }
-         //    else
-         //    {
-         //      // Fluttertoast.showToast(
-         //      //     msg: ""+msg.toString(),
-         //      //     toastLength: Toast.LENGTH_SHORT,
-         //      //     gravity: ToastGravity.CENTER,
-         //      //     timeInSecForIosWeb: 1,
-         //      //     backgroundColor: AppColors.drakColorTheme,
-         //      //     textColor: AppColors.white,
-         //      //     fontSize: AppSize.medium
-         //      // );
-         //
-         //    }
-         //
-         //  }
+          var res = jsonDecode(response.body);
+          if(res['success']==true)
+            {
+
+              Fluttertoast.showToast(
+                  msg: "Registration Successfully",
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.CENTER,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
+                  fontSize: 16.0
+              );
+
+              Navigator.pushReplacement(context!, MaterialPageRoute(builder: (context) => DashBoard()),);
+             // Navigator.pop(context!);
+            }
+
         }
 
         else if (response.statusCode == 500) {
@@ -77,6 +65,7 @@ var url= Urls.BaseUrls+'facerecognition/get_data.php?name=${name}&face_model=${f
           isLoading.value=false;
           print("data" + response.body.toString());
           CustomSnackBar.errorSnackBar("Something went wrong..",context!);
+
         }
       }
 

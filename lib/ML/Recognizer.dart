@@ -6,7 +6,7 @@ import 'dart:ui';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:image/image.dart' as img;
-import 'package:realtime_face_recognition/Controller/StaffListController.dart';
+import 'package:realtime_face_recognition/Controller/AttendanceController.dart';
 import 'package:realtime_face_recognition/DB/FirebaseService.dart';
 import 'package:realtime_face_recognition/Model/StaffList/Data.dart';
 import 'package:realtime_face_recognition/Model/StaffList/StaffListModel.dart';
@@ -16,6 +16,8 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 import '../DB/DatabaseHelper.dart';
 import 'Recognition.dart';
 import 'package:http/http.dart' as http;
+
+
 class Recognizer {
   late Interpreter interpreter;
   late InterpreterOptions _interpreterOptions;
@@ -85,37 +87,24 @@ class Recognizer {
     on SocketException catch (_) {
 
     }
-    StaffListController controller=Get.put(StaffListController());
-    controller.showStaffListController();
+
+
   // users=await firebaseService.fetchDataFromFirestore();
 
 
   }
   void loadRegisteredFaces() async {
     registered.clear();
-    final allRows = await dbHelper.queryAllRows();
-   // debugPrint('query all rows:');
-   //  for (final row in allRows) {
-   //  //  debugPrint(row.toString());
-   //    print(row[DatabaseHelper.columnName]);
-   //    String name = row[DatabaseHelper.columnName];
-   //    List<double> embd = row[DatabaseHelper.columnEmbedding].split(',').map((e) => double.parse(e)).toList().cast<double>();
-   //    Recognition recognition = Recognition(row[DatabaseHelper.columnName],Rect.zero,embd,0);
-   //    registered.putIfAbsent(name, () => recognition);
-   //    print("R="+name);
-   //  }
 
-  //  List<User> users = await firebaseService.fetchDataFromFirestore();
+
     for(int i=0;i<users!.length;i++)
       {
              String name = users![i].name.toString();
-           // List<double> embd = users[i].modelData;
-              List<double> embd = parseStringToList(users![i].faceModel);
-
-
+             List<double> embd = parseStringToList(users![i].faceModel);
              print(embd);
-            Recognition recognition = Recognition(name,Rect.zero,embd,0,"false");
-           registered.putIfAbsent(name, () => recognition);
+             String staff_id=users![i].id.toString();
+            Recognition recognition = Recognition(name,Rect.zero,embd,0,staff_id);
+            registered.putIfAbsent(name, () => recognition);
             print("R="+name);
       }
 
@@ -190,15 +179,16 @@ class Recognizer {
      Pair pair = findNearest(outputArray);
      print("distance= ${pair.distance}");
 
-     return Recognition(pair.name,location,outputArray,pair.distance,pair.flag);
+     return Recognition(pair.name,location,outputArray,pair.distance,pair.id);
   }
 
   //TODO  looks for the nearest embeeding in the database and returns the pair which contain information of registered face with which face is most similar
   findNearest(List<double> emb){
-    Pair pair = Pair("Unknown", -5,"false");
+    Pair pair = Pair("Unknown", -5,"");
     for (MapEntry<String, Recognition> item in registered.entries) {
       final String name = item.key;
       List<double> knownEmb = item.value.embeddings;
+      final staff_id=item.value.id;
       double distance = 0;
       for (int i = 0; i < emb.length; i++) {
         double diff = emb[i] -
@@ -209,6 +199,8 @@ class Recognizer {
       if (pair.distance == -5 || distance < pair.distance) {
         pair.distance = distance;
         pair.name = name;
+        pair.id=staff_id;
+
       }
     }
     return pair;
@@ -222,8 +214,8 @@ class Recognizer {
 class Pair{
    String name;
    double distance;
-   String flag;
-   Pair(this.name,this.distance,this.flag);
+   String id;
+   Pair(this.name,this.distance,this.id);
 }
 
 

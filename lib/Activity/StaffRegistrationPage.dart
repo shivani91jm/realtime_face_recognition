@@ -169,8 +169,8 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
                       user: textEditingController.text,
                       modelData: recognition.embeddings,
                     );
-                    regcontroller.addStaff(textEditingController.text,recognition.embeddings);
-                    Navigator.pop(context);
+                    regcontroller.addStaff(textEditingController.text,recognition.embeddings,context);
+
                     // FirebaseFirestore.instance
                     //     .collection("users")
                     //     .doc(userId)

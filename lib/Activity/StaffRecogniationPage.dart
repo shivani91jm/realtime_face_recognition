@@ -365,32 +365,30 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     //   ),
     // ));
 
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.amber,
-          actions: [
-                           IconButton(
-                            icon: const Icon(
-                              Icons.cached,
-                              color: Colors.white,
-                            ),
-                            iconSize: 40,
-                            color: Colors.black,
-                            onPressed: () {
-                              _toggleCameraDirection();
-                            },
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.blue,
+        actions: [
+                         IconButton(
+                          icon: const Icon(
+                            Icons.cached,
+                            color: Colors.white,
                           ),
-          ],
-        ),
-        backgroundColor: Colors.black,
-        body: Container(
-            margin: const EdgeInsets.only(top: 0),
-            color: Colors.black,
-            child: Stack(
-              children: stackChildren,
-            )
-        ),
+                          iconSize: 40,
+                          color: Colors.black,
+                          onPressed: () {
+                            _toggleCameraDirection();
+                          },
+                        ),
+        ],
+      ),
+      backgroundColor: Colors.black,
+      body: Container(
+          margin: const EdgeInsets.only(top: 0),
+          color: Colors.black,
+          child: Stack(
+            children: stackChildren,
+          )
       ),
     );
   }

@@ -46,9 +46,10 @@ dependencies:
   firebase_core: any
   uuid: ^3.0.7
   intl: any
-
   shared_preferences: any
-  permission_handler: any
+  shimmer: any
+  fluttertoast: any
+
   get: any
   http: any
   provider: any
