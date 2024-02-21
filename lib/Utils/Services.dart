@@ -14,7 +14,7 @@ class Services{
       final response = await http.get(Uri.parse(Urls.staffListUrl),);
       if (response.statusCode == 200) {
         final item = json.decode(response.body);
-            final datamodel=item['data'];
+
         data = StaffListModel.fromJson(item);// Mapping json response to our data model
       } else {
         print('Error Occurred');

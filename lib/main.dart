@@ -7,6 +7,7 @@ import 'package:image/image.dart' as img;
 
 import 'package:provider/provider.dart';
 import 'package:realtime_face_recognition/Activity/DashboardPage.dart';
+import 'package:realtime_face_recognition/Activity/LoginPage.dart';
 import 'package:realtime_face_recognition/Activity/SplashScreen.dart';
 import 'package:realtime_face_recognition/Activity/StaffRecogniationPage.dart';
 import 'package:realtime_face_recognition/Activity/StaffRegistrationPage.dart';
@@ -31,7 +32,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: SplashScreen(),
+        home: LoginPage(),
       ),
     );
   }

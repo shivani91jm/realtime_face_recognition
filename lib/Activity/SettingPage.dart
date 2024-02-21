@@ -12,6 +12,7 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:realtime_face_recognition/Activity/StaffRecogniationPage.dart';
+import 'package:realtime_face_recognition/Activity/StaffRegistrationPage.dart';
 import 'package:realtime_face_recognition/Constants/AppConstants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -147,7 +148,7 @@ class _SettingPageState extends State<SettingPage> {
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text(AppContents.businessname.tr,style: TextStyle(
+                                            Text("Staff Registration",style: TextStyle(
                                                 color: Colors.black38,
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 14.0
@@ -168,9 +169,13 @@ class _SettingPageState extends State<SettingPage> {
                                       iconSize: 18,
                                       splashColor: Colors.blue ,
                                       icon: Icon(Icons.arrow_forward_ios_rounded,color:  Colors.black38,),
-                                      onPressed: ()
+                                      onPressed: () async
                                       {
-
+                                        var camera=  await availableCameras();
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) =>  StaffRegistrationPage(cameras: camera,)),
+                                        );
                                       },
                                     ),
                                   ),

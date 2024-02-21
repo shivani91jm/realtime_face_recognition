@@ -49,9 +49,6 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
   void initState() {
     // TODO: implement initState
     super.initState();
-
-
-
     currentDateMethod();
   }
   @override
@@ -77,222 +74,15 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
             child: Column(
               children: [
                 Container(
-                  child :_isLoading==false? ErrowDialogsss(): HomePage(),
+                  child :
+                  // _isLoading==false? ErrowDialogsss():
+                  HomePage(),
                 ),
-
               ],
             ),
           );
         }));
   }
-
-
-  //-----------------------------------------monthly list widget-----------------------------
-  // Widget  _buildMonthlyContrainer() {
-  //   return  ListView.builder(
-  //     physics: NeverScrollableScrollPhysics(),
-  //     scrollDirection: Axis.vertical,
-  //     shrinkWrap: true,
-  //     itemCount: getMonthlyConaList.length,
-  //     itemBuilder: (BuildContext context, int index) {
-  //       return ListTile(
-  //         title:Card(
-  //           shape: RoundedRectangleBorder(
-  //             borderRadius: BorderRadius.circular(8.0),
-  //           ),
-  //           elevation: 4,
-  //           child: Column(
-  //             crossAxisAlignment: CrossAxisAlignment.start,
-  //             children: [
-  //               Padding(
-  //                 padding: const EdgeInsets.fromLTRB(10.0,13,10,13),
-  //                 child: Row(
-  //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //                   children: [
-  //                     Column(
-  //                       crossAxisAlignment: CrossAxisAlignment.start,
-  //                       children: [
-  //                         Padding(
-  //                           padding: const EdgeInsets.all(8.0),
-  //                           child: Text(""+getMonthlyConaList[index].staffName.toString(),style: TextStyle(
-  //                               color: AppColors.textColorsBlack,
-  //                               fontSize: AppSize.small,
-  //                               fontStyle: FontStyle.normal,
-  //                               fontWeight: FontWeight.bold),),
-  //                         ),
-  //                         Row(
-  //                           children: [
-  //                             //-------------------punch in conatiner-----------------------------------------------------
-  //                             GestureDetector(
-  //                               onTap: () async{
-  //                                 _getCurrentPosition();
-  //                                 String formattedDate = DateFormat('HH:mm:ss').format(DateTime.now());
-  //                                 print("date"+formattedDate.toString());
-  //                                 _addAttendanceMethod("present",getMonthlyConaList[index].staffId.toString(),"punching_in",_currentAddress.toString(),"",formattedDate.toString(),"","Monthly","present",getMonthlyConaList[index].id.toString());
-  //                               },
-  //                               child: Container(
-  //                                 width: 70,
-  //                                 margin: EdgeInsets.fromLTRB(10, 10, 0, 0),
-  //                                 decoration: getMonthlyConaList[index].getStaffAttendance!=null&& getMonthlyConaList[index].getStaffAttendance!.isNotEmpty?getMonthlyConaList[index].getStaffAttendance?.last.attendanceMarks=="present"?BoxDecoration(
-  //                                   color: AppColors.green,
-  //                                   borderRadius:BorderRadius.circular(5),
-  //                                   border: Border.all(
-  //                                     width:1,
-  //                                     color: AppColors.green,
-  //                                     style: BorderStyle.solid,
-  //                                   ),):BoxDecoration(
-  //                                   color: Colors.grey[200],
-  //                                   borderRadius:BorderRadius.circular(5),
-  //                                   border: Border.all(
-  //                                     width:1,
-  //                                     color: Colors.grey,
-  //                                     style: BorderStyle.solid,
-  //                                   ),): BoxDecoration(
-  //                                   color: Colors.grey[200],
-  //                                   borderRadius:BorderRadius.circular(5),
-  //                                   border: Border.all(
-  //                                     width:1,
-  //                                     color: Colors.grey,
-  //                                     style: BorderStyle.solid,
-  //                                   ),),
-  //                                 child: Padding(
-  //                                   padding: const EdgeInsets.all(10.0),
-  //                                   child:  Text(AppContents.Present.tr,style: TextStyle(
-  //                                       color:  getMonthlyConaList[index].getStaffAttendance!=null &&getMonthlyConaList[index].getStaffAttendance!.isNotEmpty ?getMonthlyConaList[index].getStaffAttendance?.last.attendanceMarks=="present"?
-  //                                       AppColors.white: AppColors.lightTextColorsBlack: AppColors.dartTextColorsBlack,
-  //                                       fontSize: AppSize.nine,
-  //                                       fontStyle: FontStyle.normal,
-  //                                       fontWeight: FontWeight.bold),),
-  //                                 ),
-  //                               ),
-  //                             ),
-  //                             //----------------punch out conatiner ----------------------
-  //                             GestureDetector(
-  //                               onTap: () async{
-  //                                 _getCurrentPosition();
-  //                                 String formattedDate = DateFormat('HH:mm:ss').format(DateTime.now());
-  //                                 print("date"+formattedDate.toString());
-  //                                 _addAttendanceMethod("half_day",getMonthlyConaList[index].staffId.toString(),"punching_in",_currentAddress.toString(),"",formattedDate.toString(),"","Monthly","half_day",getMonthlyConaList[index].id.toString());
-  //                               },
-  //                               child: Container(
-  //                                 width: 70,
-  //                                 margin: EdgeInsets.fromLTRB(10, 10, 0, 0),
-  //                                 decoration: getMonthlyConaList[index].getStaffAttendance!=null&& getMonthlyConaList[index].getStaffAttendance!.isNotEmpty?getMonthlyConaList[index].getStaffAttendance?.last.attendanceMarks=="half_day"?BoxDecoration(
-  //                                   color: Colors.orangeAccent,
-  //                                   borderRadius:BorderRadius.circular(5),
-  //                                   border: Border.all(
-  //                                     width:1,
-  //                                     color: Colors.orangeAccent,
-  //                                     style: BorderStyle.solid,
-  //                                   ),):BoxDecoration(
-  //                                   color: Colors.grey[200],
-  //                                   borderRadius:BorderRadius.circular(5),
-  //                                   border: Border.all(
-  //                                     width:1,
-  //                                     color: Colors.grey,
-  //                                     style: BorderStyle.solid,
-  //                                   ),): BoxDecoration(
-  //                                   color: Colors.grey[200],
-  //                                   borderRadius:BorderRadius.circular(5),
-  //                                   border: Border.all(
-  //                                     width:1,
-  //                                     color: Colors.grey,
-  //                                     style: BorderStyle.solid,
-  //                                   ),),
-  //                                 child: Padding(
-  //                                   padding: const EdgeInsets.all(10.0),
-  //                                   child:  Text(AppContents.HalfDay.tr,style: TextStyle(
-  //                                       color:  getMonthlyConaList[index].getStaffAttendance!=null &&getMonthlyConaList[index].getStaffAttendance!.isNotEmpty ?getMonthlyConaList[index].getStaffAttendance?.last.attendanceMarks=="half_day"?Colors.white: Colors.black38: Colors.black45,
-  //                                       fontSize: 9.0,
-  //                                       fontStyle: FontStyle.normal,
-  //                                       fontWeight: FontWeight.bold),),
-  //                                 ),
-  //                               ),
-  //                             ),
-  //                             // ----------------------------delete staff punch -----------------------
-  //                             GestureDetector(
-  //                               onTap: ()async{
-  //                                 String formattedDate = DateFormat('HH:mm:ss').format(DateTime.now());
-  //                                 print("date"+formattedDate.toString());
-  //                                 _addAttendanceMethod("absent",getMonthlyConaList[index].staffId.toString(),"absent",_currentAddress.toString(),"",formattedDate.toString(),"","Monthly","absent",getMonthlyConaList[index].id.toString());
-  //                               },
-  //                               child: Container(
-  //                                 width: 70,
-  //                                 margin: EdgeInsets.fromLTRB(10, 10, 0, 0),
-  //                                 decoration: getMonthlyConaList[index].getStaffAttendance!=null&& getMonthlyConaList[index].getStaffAttendance!.isNotEmpty?getMonthlyConaList[index].getStaffAttendance?.last.attendanceMarks=="absent"?BoxDecoration(
-  //                                   color: Colors.red,
-  //                                   borderRadius:BorderRadius.circular(5),
-  //                                   border: Border.all(
-  //                                     width:1,
-  //                                     color: Colors.red,
-  //                                     style: BorderStyle.solid,
-  //                                   ),):BoxDecoration(
-  //                                   color: Colors.grey[200],
-  //                                   borderRadius:BorderRadius.circular(5),
-  //                                   border: Border.all(
-  //                                     width:1,
-  //                                     color: Colors.grey,
-  //                                     style: BorderStyle.solid,
-  //                                   ),): BoxDecoration(
-  //                                   color: Colors.grey[200],
-  //                                   borderRadius:BorderRadius.circular(5),
-  //                                   border: Border.all(
-  //                                     width:1,
-  //                                     color: Colors.grey,
-  //                                     style: BorderStyle.solid,
-  //                                   ),),
-  //
-  //                                 child: Padding(
-  //                                   padding: const EdgeInsets.all(10.0),
-  //                                   child:  Text(AppContents.Absent.tr,style: TextStyle(
-  //                                       color:  getMonthlyConaList[index].getStaffAttendance!=null &&getMonthlyConaList[index].getStaffAttendance!.isNotEmpty?getMonthlyConaList[index].getStaffAttendance?.last.attendanceMarks=="absent"?Colors.white: Colors.black38: Colors.black45,
-  //                                       fontSize: 9.0,
-  //                                       fontStyle: FontStyle.normal,
-  //                                       fontWeight: FontWeight.bold),),
-  //                                 ),
-  //                               ),
-  //                             ),
-  //
-  //                           ],
-  //                         ),
-  //                       ],
-  //                     ),
-  //                     Column(
-  //                       children: [
-  //                         Padding(
-  //                             padding: const EdgeInsets.all(8.0),
-  //                             child: Column(
-  //                               children: [
-  //                                 if(getMonthlyConaList[index].attandancStatus=="false")...
-  //                                 {
-  //                                   Text(AppContents.notmarked.tr,style: TextStyle(
-  //                                       color: Colors.black38,
-  //                                       fontSize: 12.0,
-  //                                       fontStyle: FontStyle.normal,
-  //                                       fontWeight: FontWeight.bold),),
-  //                                 }
-  //
-  //                               ],
-  //                             )
-  //                         ),
-  //
-  //                       ],
-  //                     ),
-  //                   ],
-  //                 ),
-  //               )
-  //             ],
-  //           ),
-  //         ),
-  //
-  //       );
-  //
-  //     },
-  //   );
-  // }
-
-
-
   Widget ErrowDialogsss() {
     return Center(
       child: Column(
@@ -332,8 +122,6 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
       ],
     );
   }
-
-
   // -------------------------------------previous month or day staff list show------------------------------------------
   void getPreviousMonthData() {
     currentDate = currentDate.subtract(Duration(days: 1));
@@ -395,8 +183,6 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
       print("condition not match"+nextDate+"date"+date);
     }
   }
-
-
   void currentDateMethod() {
     nextDate=currentDate.toString() ;
     DateFormat('yyyy-MM-dd').format(currentDate);
