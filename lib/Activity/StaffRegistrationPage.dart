@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+import 'package:realtime_face_recognition/Constants/custom_snackbar.dart';
 import 'package:realtime_face_recognition/Controller/RegistrationController.dart';
 import 'package:realtime_face_recognition/ML/Recognition.dart';
 import 'package:realtime_face_recognition/ML/Recognizer.dart';
@@ -159,45 +160,21 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
                 ),
               ),
               const SizedBox(height: 10,),
-              ElevatedButton(
-                  onPressed: () {
-                    recognizer.registerFaceInDB(textEditingController.text, recognition.embeddings);
-
-
-                    String userId = Uuid().v1();
-                    User userToSave = User(
-                      user: textEditingController.text,
-                      modelData: recognition.embeddings,
-                    );
-                    regcontroller.addStaff(textEditingController.text,recognition.embeddings,context);
-
-                    // FirebaseFirestore.instance
-                    //     .collection("users")
-                    //     .doc(userId)
-                    //     .set(userToSave.toJson())
-                    //     .catchError((e) {
-                    //   log("Registration Error: $e");
-                    //   Navigator.of(context).pop();
-                    //
-                    //
-                    // }).whenComplete(() {
-                    //   textEditingController.text = "";
-                    //   Navigator.pop(context);
-                    //   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyApp()));
-                    // });
-                    // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    //   content: Text("Face Registered"),
-                    // ));
-
-
-
-
-
-
-                  },
-                  style: ElevatedButton.styleFrom(primary:Colors.blue,minimumSize: const Size(200,40)),
-                  child: const Text("Register")
-              )
+              Obx(() =>     ElevatedButton(
+                onPressed: regcontroller.isLoading2.value ? null : () {
+                    var name=textEditingController.text;
+                    if(name!="" && name!="null")
+                      {
+                        recognizer.registerFaceInDB(name, recognition.embeddings);
+                        regcontroller.addStaff(name,recognition.embeddings,context);
+                      }
+                    else
+                      {
+                        CustomSnackBar.errorSnackBar("Please Enter your name",context!);
+                      }
+                },
+                style: ElevatedButton.styleFrom(primary:Colors.blue,minimumSize: const Size(200,40)),
+                child:  regcontroller.isLoading2.value ? Center(child: Container(height: 20,width: 20,child: CircularProgressIndicator(),)) : Text('Register'),))
             ],
           ),
         ),contentPadding: EdgeInsets.zero,

@@ -8,18 +8,19 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:realtime_face_recognition/Activity/DashboardPage.dart';
-import 'package:realtime_face_recognition/Activity/SettingPage.dart';
+
 import 'package:realtime_face_recognition/Constants/custom_snackbar.dart';
 import 'package:realtime_face_recognition/Utils/Urils.dart';
-import 'package:realtime_face_recognition/main.dart';
+
 
 
 class RegistrationController extends GetxController{
   RxBool isLoading=false.obs;
+  RxBool isLoading2=false.obs;
   BuildContext? context=Get.context;
   void addStaff(String name,List<dynamic> facemodel, BuildContext context) async
   {
-    isLoading.value=true;
+    isLoading2.value=true;
     print("name"+name.toString());
     print("arra"+facemodel.toString());
 
@@ -35,7 +36,7 @@ var url= Urls.BaseUrls+'facerecognition/get_data.php?name=${name}&face_model=${f
           'Content-Type': 'application/json; charset=UTF-8',},);
         print("response"+response.body.toString());
         if (response.statusCode == 200) {
-          isLoading.value=false;
+          isLoading2.value=false;
           var res = jsonDecode(response.body);
           if(res['success']==true)
             {
@@ -45,7 +46,7 @@ var url= Urls.BaseUrls+'facerecognition/get_data.php?name=${name}&face_model=${f
                   toastLength: Toast.LENGTH_SHORT,
                   gravity: ToastGravity.CENTER,
                   timeInSecForIosWeb: 1,
-                  backgroundColor: Colors.red,
+                  backgroundColor: Colors.green,
                   textColor: Colors.white,
                   fontSize: 16.0
               );
@@ -55,14 +56,13 @@ var url= Urls.BaseUrls+'facerecognition/get_data.php?name=${name}&face_model=${f
             }
 
         }
-
         else if (response.statusCode == 500) {
-          isLoading.value=false;
+          isLoading2.value=false;
           print("data" + response.body.toString());
           CustomSnackBar.errorSnackBar("Server Side Error",context!);
         }
         else {
-          isLoading.value=false;
+          isLoading2.value=false;
           print("data" + response.body.toString());
           CustomSnackBar.errorSnackBar("Something went wrong..",context!);
 

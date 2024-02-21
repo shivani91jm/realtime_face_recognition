@@ -16,7 +16,7 @@ class _DashBoardState extends State<DashBoard> {
   final List<Widget> _pages = [
     ShowStaffListPage(),
     AttendencePageClass(),
-    SettingsPage(),
+    SettingPage(),
   ];
   @override
   Widget build(BuildContext context) {

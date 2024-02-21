@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:realtime_face_recognition/Activity/DashboardPage.dart';
-import 'package:realtime_face_recognition/Activity/SettingPage.dart';
+
 import 'package:realtime_face_recognition/Constants/custom_snackbar.dart';
 import 'package:realtime_face_recognition/Model/StaffList/Data.dart';
 
