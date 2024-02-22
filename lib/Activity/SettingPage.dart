@@ -11,6 +11,7 @@ import 'package:get/get.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 import 'package:path_provider/path_provider.dart';
+import 'package:realtime_face_recognition/Activity/LoginPage.dart';
 import 'package:realtime_face_recognition/Activity/StaffRecogniationPage.dart';
 import 'package:realtime_face_recognition/Activity/StaffRegistrationPage.dart';
 import 'package:realtime_face_recognition/Constants/AppConstants.dart';
@@ -67,13 +68,14 @@ class _SettingPageState extends State<SettingPage> {
     return Scaffold(
       backgroundColor:Colors.grey[200],
       appBar: AppBar(
+        backgroundColor: Colors.blue,
           automaticallyImplyLeading: false,
           title: Text(AppContents.settings.tr),
           actions: [
             new IconButton(
                 icon: new Icon(Icons.logout_rounded, color: Colors.white),
                 onPressed: () async{
-                 //_showLogoutDilaog(context);
+                 _showLogoutDilaog(context);
                 }
             )]
           ),
@@ -606,47 +608,47 @@ class _SettingPageState extends State<SettingPage> {
   }
 
 
-  // void _showLogoutDilaog(BuildContext context) {
-  //   showDialog<String>(
-  //       context: context,
-  //       builder: (BuildContext context) => AlertDialog(
-  //         title:  Text(AppContents.logout.tr,style: TextStyle(
-  //             fontSize: 18,
-  //             color: Colors.black87,
-  //             fontWeight: FontWeight.bold
-  //         ),),
-  //         content:  Text(AppContents.logoutsucesstitle.tr),
-  //         actions: <Widget>[
-  //           TextButton(
-  //             onPressed: () => Navigator.pop(context, 'Cancel'),
-  //             child:  Text(AppContents.cancel.tr,style: TextStyle(
-  //                 fontSize: 15,
-  //                 color: Colors.red
-  //             ),),
-  //           ),
-  //           TextButton(
-  //             onPressed: () async{
-  //               _logoutUser();
-  //             } ,
-  //             child:  Text(AppContents.ok.tr,style: TextStyle(
-  //                 fontSize: 15,
-  //                 color: Colors.green
-  //             ),),
-  //           ),
-  //         ],
-  //       ));
-  // }
+  void _showLogoutDilaog(BuildContext context) {
+    showDialog<String>(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          title:  Text("Logout",style: TextStyle(
+              fontSize: 18,
+              color: Colors.black87,
+              fontWeight: FontWeight.bold
+          ),),
+          content:  Text("Are you sure to logout app ?"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'Cancel'),
+              child:  Text("Cancel",style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.red
+              ),),
+            ),
+            TextButton(
+              onPressed: () async{
+                _logoutUser();
+              } ,
+              child:  Text("OK",style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.green
+              ),),
+            ),
+          ],
+        ));
+  }
   //
-  // void _logoutUser() async{
-  //   // SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   // await prefs.clear();
-  //   // FirebaseAuth.instance.signOut();
-  //   // GoogleSignIn _googleSignIn = GoogleSignIn();
-  //   // bool isSignedIn = await _googleSignIn.isSignedIn();
-  //   // _googleSignIn.signOut();
-  //   // await Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginPage()),);
-  //
-  // }
+  void _logoutUser() async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+   // FirebaseAuth.instance.signOut();
+  //  GoogleSignIn _googleSignIn = GoogleSignIn();
+   // bool isSignedIn = await _googleSignIn.isSignedIn();
+  //  _googleSignIn.signOut();
+    await Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginPage()),);
+
+  }
   //
   // void showdialog(BuildContext context) {
   //   showDialog<String>(

@@ -1,17 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:realtime_face_recognition/Activity/DashboardPage.dart';
-
 import 'package:realtime_face_recognition/Constants/custom_snackbar.dart';
 import 'package:realtime_face_recognition/Model/StaffList/Data.dart';
-
 import 'package:realtime_face_recognition/Utils/Urils.dart';
-import 'package:realtime_face_recognition/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class AttendanceController extends GetxController {
   RxBool isLoading=false.obs;
@@ -24,12 +22,16 @@ class AttendanceController extends GetxController {
         var date = DateFormat('yyyy-MM-dd').format(DateTime.now());
         String formattedDate = DateFormat('HH:mm:ss').format(DateTime.now());
         print(""+formattedDate.toString());
+        final SharedPreferences prefs = await SharedPreferences.getInstance();
+        var admin_id= await prefs.getString('admin_id')??"";
          var url= Urls.emp_attendanceUrl;
          print("res body"+url.toString());
          var body = jsonEncode(<String, String>{
            'employee_id':staff_id,
            'date':date,
-           'time': formattedDate
+           'time': formattedDate,
+           'admin_id':admin_id,
+
          });
         final response = await http.post(Uri.parse(url),
             headers: <String, String>{

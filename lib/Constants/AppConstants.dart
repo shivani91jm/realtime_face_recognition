@@ -19,4 +19,5 @@ class AppContents {
   static const String businessname = "Business Name";
   static const String personal_infomation = "Personal Information";
   static const String accountsettings = "Account Settings";
+  static const String Password = "Password";
 }

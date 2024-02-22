@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:realtime_face_recognition/Constants/custom_snackbar.dart';
-import 'package:realtime_face_recognition/Controller/RegistrationController.dart';
+import 'package:realtime_face_recognition/Controller/StaffRegistrationController.dart';
 import 'package:realtime_face_recognition/ML/Recognition.dart';
 import 'package:realtime_face_recognition/ML/Recognizer.dart';
 import 'package:image/image.dart' as img;

@@ -12,6 +12,7 @@ import 'package:realtime_face_recognition/Model/StaffList/Data.dart';
 import 'package:realtime_face_recognition/Model/StaffList/StaffListModel.dart';
 import 'package:realtime_face_recognition/Model/usermodel.dart';
 import 'package:realtime_face_recognition/Utils/Urils.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import '../DB/DatabaseHelper.dart';
 import 'Recognition.dart';
@@ -44,7 +45,9 @@ class Recognizer {
     try {
       final result = await InternetAddress.lookup('google.com');
       if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-        var url= Urls.staffListUrl;
+        final SharedPreferences prefs = await SharedPreferences.getInstance();
+        var admin_id= await prefs.getString('admin_id')??"";
+        var url= Urls.staffListUrl+"admin_id=${admin_id}";
         print("res body"+url.toString());
         final response = await http.get(Uri.parse(url), headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',},);

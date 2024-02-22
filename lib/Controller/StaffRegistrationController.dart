@@ -1,7 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-
-
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
@@ -11,8 +9,7 @@ import 'package:realtime_face_recognition/Activity/DashboardPage.dart';
 
 import 'package:realtime_face_recognition/Constants/custom_snackbar.dart';
 import 'package:realtime_face_recognition/Utils/Urils.dart';
-
-
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RegistrationController extends GetxController{
   RxBool isLoading=false.obs;
@@ -29,8 +26,9 @@ class RegistrationController extends GetxController{
       if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
         String formattedDate = DateFormat('HH:mm:ss').format(DateTime.now());
         print(""+formattedDate.toString());
-
-var url= Urls.BaseUrls+'facerecognition/get_data.php?name=${name}&face_model=${facemodel}&time=${formattedDate}';
+        final SharedPreferences prefs = await SharedPreferences.getInstance();
+       var admin_id= await prefs.getString('admin_id')??"";
+       var url= Urls.BaseUrls+'facerecognition/get_data.php?name=${name}&face_model=${facemodel}&time=${formattedDate}&admin_id=${admin_id}';
         print("res body"+url.toString());
         final response = await http.get(Uri.parse(url), headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',},);
