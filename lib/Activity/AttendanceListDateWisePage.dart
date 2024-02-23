@@ -484,7 +484,7 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
                     child: Text(postMdl.data[i].name!,
                       style: AppFontFamilyClass.blackebold,),
                   ),
-                  if(postMdl.data[i].punchIn==null &&  postMdl.data[i].punchIn=="null")...
+                  if(postMdl.data[i].punchIn==null &&  postMdl.data[i].punchIn=="")...
                   {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
