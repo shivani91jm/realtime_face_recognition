@@ -93,10 +93,12 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
 
     //TODO perform face recognition on detected faces
     performFaceRecognition(faces);
-    setState(() {
-      _scanResults = faces;
-      isBusy = false;
-    });
+    if(mounted) {
+      setState(() {
+        _scanResults = faces;
+        isBusy = false;
+      });
+    }
   }
 
   img.Image? image;
@@ -128,13 +130,14 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
       }
 
     }
-    setState(() {
-     if(mounted)
-       {
-         isBusy  = false;
-         _scanResults = recognitions;
-       }
-    });
+    if(mounted) {
+      setState(() {
+
+          isBusy = false;
+          _scanResults = recognitions;
+
+      });
+    }
 
   }
 
@@ -389,16 +392,14 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
       ),
     ));
 
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: Container(
-            margin: const EdgeInsets.only(top: 0),
-            color: Colors.black,
-            child: Stack(
-              children: stackChildren,
-            )),
-      ),
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Container(
+          margin: const EdgeInsets.only(top: 0),
+          color: Colors.black,
+          child: Stack(
+            children: stackChildren,
+          )),
     );
   }
 }

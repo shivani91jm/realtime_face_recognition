@@ -15,6 +15,7 @@ import 'package:realtime_face_recognition/Activity/LoginPage.dart';
 import 'package:realtime_face_recognition/Activity/StaffRecogniationPage.dart';
 import 'package:realtime_face_recognition/Activity/StaffRegistrationPage.dart';
 import 'package:realtime_face_recognition/Constants/AppConstants.dart';
+import 'package:realtime_face_recognition/Utils/AppFontFamily.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -70,7 +71,7 @@ class _SettingPageState extends State<SettingPage> {
       appBar: AppBar(
         backgroundColor: Colors.blue,
           automaticallyImplyLeading: false,
-          title: Text(AppContents.settings.tr),
+          title: Text(AppContents.settings.tr,style: AppFontFamilyClass.bold,),
           actions: [
             new IconButton(
                 icon: new Icon(Icons.logout_rounded, color: Colors.white),
@@ -136,8 +137,12 @@ class _SettingPageState extends State<SettingPage> {
                          ),
                           //----------------------------bussiness name-------------------------------
                           GestureDetector(
-                            onTap: (){
-
+                            onTap: ()async {
+                              var camera=  await availableCameras();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) =>  StaffRegistrationPage(cameras: camera,)),
+                              );
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -240,21 +245,30 @@ class _SettingPageState extends State<SettingPage> {
                             child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Container(
-                                    child: Padding(
-                                      padding: const EdgeInsets.fromLTRB(1.0,0.0,0.0,0.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(AppContents.scan.tr,style: TextStyle(
-                                              color: Colors.black87,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 15.0
-                                          ),),
+                                  GestureDetector(
+                                    onTap: () async{
+                                      var camera=  await availableCameras();
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (context) =>  StaffRecognationPage(cameras: camera,)),
+                                      );
+                                    },
+                                    child: Container(
+                                      child: Padding(
+                                        padding: const EdgeInsets.fromLTRB(1.0,0.0,0.0,0.0),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(AppContents.scan.tr,style: TextStyle(
+                                                color: Colors.black87,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 15.0
+                                            ),),
 
-                                        ],
-                                      ),
-                                    ),),
+                                          ],
+                                        ),
+                                      ),),
+                                  ),
                                   Align(
                                     alignment: Alignment.topRight,
                                     child: IconButton(

@@ -157,10 +157,11 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
 
     }
     Timer(const Duration(seconds: 2), () async{
-      setState(() {
-        isBusy  = false;
-
-      });
+      if (mounted) {
+        setState(() {
+          isBusy = false;
+        });
+      }
 
     });
   }

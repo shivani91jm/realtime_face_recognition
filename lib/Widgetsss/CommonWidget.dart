@@ -14,9 +14,14 @@ Widget loadingShimmer() => Shimmer.fromColors(
         Expanded(
           flex: 1,
           child: Container(
-            width: 100,
-            height: 100,
-            color: Colors.grey,
+            width: 30,
+            height: 50,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20.0),
+              color: Colors.grey,
+            )
+            ,
+
           ),
         ),
         const SizedBox(
