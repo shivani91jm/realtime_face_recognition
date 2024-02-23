@@ -7,9 +7,9 @@ class ShowAttendanceList extends ChangeNotifier{
   late List<AttendanceModelClass> data=[];
   bool loading = false;
   Service2 services = Service2();
-  getData(context) async {
+  getData(context,String date) async {
     loading = true;
-    data = await services.ShowAttendanceList(context);
+    data = await services.ShowAttendanceList(context,date);
     loading = false;
     notifyListeners();
   }

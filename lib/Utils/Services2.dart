@@ -5,12 +5,12 @@ import 'package:realtime_face_recognition/Model/AttendanceModel/AttendanceModelC
 import 'package:realtime_face_recognition/Utils/Urils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 class Service2{
-  Future<List<AttendanceModelClass>> ShowAttendanceList(context) async {
+  Future<List<AttendanceModelClass>> ShowAttendanceList(context,String date) async {
      List<AttendanceModelClass> data=[];
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       var admin_id= await prefs.getString('admin_id')??"";
-      var url= Urls.dailyattendance+"admin_id=${admin_id}";
+      var url= Urls.dailyattendance+"admin_id=${admin_id}&date=${date}";
       print("res body"+url.toString());
       final response = await http.get(Uri.parse(url),);
       if (response.statusCode == 200) {

@@ -51,7 +51,7 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
     // TODO: implement initState
     super.initState();
     currentDateMethod();
-    Provider.of<ShowAttendanceList>(context, listen: false).getData(context);
+
   }
   @override
   Widget build(BuildContext context)
@@ -114,6 +114,7 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
           noaatendancelistFlag=true;
 
         });
+
       }
       else
       {
@@ -121,8 +122,10 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
           DateTime startDate = DateTime.parse(nextDate);
           print(startDate);
           currentDate=startDate;
+       var   date = DateFormat('yyyy-MM-dd').format(currentDate);
           noaatendancelistFlag=false;
          // showStaffListData();
+          Provider.of<ShowAttendanceList>(context, listen: false).getData(context,date.toString());
         });
       }
     });
@@ -145,6 +148,7 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
         currentDate=startDate;
         isButtonEnabled=false;
       //  showStaffListData();
+        Provider.of<ShowAttendanceList>(context, listen: false).getData(context,date.toString());
       });
       print("condition match"+nextDate.toString()+"date"+date);
     }
@@ -156,6 +160,7 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
         currentDate=startDate;
         isButtonEnabled=true;
         //showStaffListData();
+        Provider.of<ShowAttendanceList>(context, listen: false).getData(context,date.toString());
       });
       print("condition not match"+nextDate+"date"+date);
     }
@@ -165,6 +170,8 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
     DateFormat('yyyy-MM-dd').format(currentDate);
     DateTime startDate = DateTime.parse(nextDate);
     print(startDate);
+    var date= DateFormat('yyyy-MM-dd').format(currentDate);
+    Provider.of<ShowAttendanceList>(context, listen: false).getData(context,date.toString());
   }
   Widget nodatastaffList() {
     return Center(
@@ -536,7 +543,6 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
                             }
                             else...{
                               Padding(
-
                                 padding: const EdgeInsets.fromLTRB(1.0,1.0,1.0,10.0),
                                 child: Text("-",
                                   style: AppFontFamilyClass.blackebold,),
