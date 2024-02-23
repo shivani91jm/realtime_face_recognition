@@ -60,7 +60,6 @@ class _ShowStaffListPageState extends State<ShowStaffListPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(postMdl.data!.data![i].name!,style: TextStyle(
-
                           ),),
                         ],
                       ),

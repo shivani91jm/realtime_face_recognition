@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
@@ -119,9 +120,10 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
       img.Image croppedFace = img.copyCrop(image!, x:faceRect.left.toInt(),y:faceRect.top.toInt(),width:faceRect.width.toInt(),height:faceRect.height.toInt());
 
       //TODO pass cropped face to face recognition model
-      Recognition recognition = recognizer.recognize(croppedFace!, faceRect);
+      Recognition recognition = recognizer.recognize(croppedFace!, face.boundingBox);
       if(recognition.distance>0.9){
         recognition.name = "Unknown";
+
       }
 
       recognitions.add(recognition);
@@ -154,12 +156,13 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
 
 
     }
+    Timer(const Duration(seconds: 2), () async{
+      setState(() {
+        isBusy  = false;
 
-    // setState(() {
-    // //   isBusy  = false;
-    //    _scanResults = recognitions;
-    //  });
+      });
 
+    });
   }
   // TODO method to convert CameraImage to Image
   img.Image convertYUV420ToImage(CameraImage cameraImage) {

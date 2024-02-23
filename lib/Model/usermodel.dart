@@ -2,12 +2,9 @@ import 'dart:convert';
 
 class User {
   String user;
-
   List modelData;
-
   User({
     required this.user,
-
     required this.modelData,
   });
 

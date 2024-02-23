@@ -3,7 +3,10 @@ import 'package:flutter/services.dart';
 
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:realtime_face_recognition/Constants/AppConstants.dart';
+import 'package:realtime_face_recognition/Controller/ShowAttendaceDailyListController.dart';
+import 'package:realtime_face_recognition/Utils/AppFontFamily.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -33,8 +36,6 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
 
   var name="";
   var pandingApproval;
-
-
   var markAttendanceTotal;
   bool markattendanceStatus=false;
   @override
@@ -50,13 +51,16 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
     // TODO: implement initState
     super.initState();
     currentDateMethod();
+    Provider.of<ShowAttendanceList>(context, listen: false).getData(context);
   }
   @override
   Widget build(BuildContext context)
   {
+    final postMdl = Provider.of<ShowAttendanceList>(context);
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp,DeviceOrientation.portraitDown,]);
     return Scaffold(
         appBar: AppBar(
+          backgroundColor: Colors.blue,
             automaticallyImplyLeading: false,
             centerTitle: true,
             title: Row(
@@ -70,17 +74,7 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
         ),
         body: LayoutBuilder(builder: (BuildContext context, BoxConstraints constraints)
         {
-          return   SingleChildScrollView(
-            child: Column(
-              children: [
-                Container(
-                  child :
-                  // _isLoading==false? ErrowDialogsss():
-                  HomePage(),
-                ),
-              ],
-            ),
-          );
+          return  SingleChildScrollView(child: postMdl.loading? ErrowDialogsss(): HomePage(postMdl),);
         }));
   }
   Widget ErrowDialogsss() {
@@ -103,24 +97,7 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
     );
   }
   Widget staffListWidget() {
-    return Column(
-      children: [
-        ListView(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          children: [
-
-              Divider(
-                height: 1,
-                color: Colors.grey,
-              ),
-              //_buildMonthlyContrainer(),
-            ],
-
-
-        ),
-      ],
-    );
+    return _showAttendanceList();
   }
   // -------------------------------------previous month or day staff list show------------------------------------------
   void getPreviousMonthData() {
@@ -202,7 +179,6 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
       ),
     );
   }
-
   Widget  staffListAttendancePage() {
     return Column(
       children: [
@@ -418,47 +394,13 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
           ),
         ),
 
-        //---------------------------------------search staff-----------------------------
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            GestureDetector(
-              onTap: () async{
 
-              },
-              child: Container(
-                width: 339,
-                margin: EdgeInsets.fromLTRB(15, 10, 0, 10),
-                decoration: BoxDecoration(
-                  border: Border.all(width: 1, color: Colors.black38),
-                  borderRadius: BorderRadius.all(Radius.circular(3)),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(15, 12, 10, 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(AppContents.searchstaff.tr,style: TextStyle(
-                          color: Colors.black38,
-                          fontSize: 14.0,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.bold),),
-                      Icon(Icons.search,color: Colors.black38,)
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-          ],
-        ),
         //-----------------------staff listing show  Container-------------------------------
         staffListWidget()
       ],
     );
   }
-
-  Widget  HomePage() {
+  Widget  HomePage(ShowAttendanceList post) {
     return Column(
       children: [
         Card(
@@ -513,6 +455,110 @@ class _AttendencePageClassState extends State<AttendencePageClass> {
       ],
     );
   }
+  Widget _showAttendanceList() {
+   final postMdl = Provider.of<ShowAttendanceList>(context);
+    return  ListView.builder(
+      itemCount: postMdl.data.length,
+      physics: NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      itemBuilder: (context, i) {
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(postMdl.data[i].name!,
+                      style: AppFontFamilyClass.blackebold,),
+                  ),
+                  if(postMdl.data[i].punchIn==null &&  postMdl.data[i].punchIn=="null")...
+                  {
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text("not marked"!,
+                        style: AppFontFamilyClass.blackebold,),
+                    ),
+                    Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(1.0,1.0,10.0,10.0),
+                          child: Text("NA",
+                            style: AppFontFamilyClass.redtbold,),
+                        ),
+                        Padding(
+
+                          padding: const EdgeInsets.fromLTRB(1.0,1.0,1.0,10.0),
+                          child: Text("-",
+                            style: AppFontFamilyClass.blackebold,),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(1.0,1.0,10.0,10.0),
+                          child: Text("NA",
+                            style: AppFontFamilyClass.redtbold,),
+                        ),
+                      ],
+                    )
+                  }
+                  else...{
+                    Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(1.0,8.0,1.0,1.0),
+                          child: Text("Present",
+                            style: AppFontFamilyClass.blackebold,),
+                        ),
+                        Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(1.0,1.0,1.0,10.0),
+                              child: Text(postMdl.data[i].punchIn.toString(),
+                                style: AppFontFamilyClass.lightbold,),
+                            ),
+
+                            if(postMdl.data[i].punchOut!=null && postMdl.data[i].punchOut!="null")...
+                            {
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(1.0,1.0,1.0,10.0),
+                                child: Text("-",
+                                  style: AppFontFamilyClass.blackebold,),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(1.0,1.0,10.0,10.0),
+                                child: Text(postMdl.data[i].punchOut.toString(),
+                                  style: AppFontFamilyClass.redtbold,),
+                              ),
+                            }
+                            else...{
+                              Padding(
+
+                                padding: const EdgeInsets.fromLTRB(1.0,1.0,1.0,10.0),
+                                child: Text("-",
+                                  style: AppFontFamilyClass.blackebold,),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(1.0,1.0,10.0,10.0),
+                                child: Text("NA",
+                                  style: AppFontFamilyClass.redtbold,),
+                              ),
+                            }
+                          ],
+                        ),
+                      ],
+                    )
+                  }
+
+                ],
+              )),
+        );
+      },
+    );
+ }
 
 
 

@@ -12,6 +12,7 @@ import 'package:realtime_face_recognition/Activity/SplashScreen.dart';
 import 'package:realtime_face_recognition/Activity/StaffRecogniationPage.dart';
 import 'package:realtime_face_recognition/Activity/StaffRegistrationPage.dart';
 import 'package:realtime_face_recognition/Controller/BottomNavigationProvider.dart';
+import 'package:realtime_face_recognition/Controller/ShowAttendaceDailyListController.dart';
 import 'package:realtime_face_recognition/Controller/ShowStaffListProvider.dart';
 
 
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider<BottomNavigationProvider>(create: (_) => BottomNavigationProvider()),
         ChangeNotifierProvider<ShowStaffListProvider>(create: (_) => ShowStaffListProvider()),
+        ChangeNotifierProvider<ShowAttendanceList>(create: (_) => ShowAttendanceList()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
