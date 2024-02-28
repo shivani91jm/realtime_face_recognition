@@ -5,8 +5,7 @@ class AttendanceModelClass {
   String? punchOut;
   String? date;
 
-  AttendanceModelClass(
-      {this.id, this.name, this.punchIn, this.punchOut, this.date});
+  AttendanceModelClass({this.id, this.name, this.punchIn, this.punchOut, this.date});
 
   AttendanceModelClass.fromJson(Map<String, dynamic> json) {
     id = json['id'];

@@ -22,12 +22,12 @@ import 'package:http/http.dart' as http;
 class Recognizer {
   late Interpreter interpreter;
   late InterpreterOptions _interpreterOptions;
-  static const int WIDTH = 112;
-  static const int HEIGHT = 112;
+  static const int WIDTH = 160;
+  static const int HEIGHT = 160;
   final dbHelper = DatabaseHelper();
   Map<String,Recognition> registered = Map();
   @override
-  String get modelName => 'assets/mobile_face_net.tflite';
+  String get modelName => 'assets/facenet.tflite';
   final FirebaseService firebaseService = FirebaseService();
   List<Data>? users;
   Recognizer({int? numThreads}) {
@@ -92,7 +92,7 @@ class Recognizer {
     }
 
 
-  // users=await firebaseService.fetchDataFromFirestore();
+
 
 
   }
@@ -157,7 +157,7 @@ class Recognizer {
         }
       }
     }
-    return reshapedArray.reshape([1,112,112,3]);
+    return reshapedArray.reshape([1,160,160,3]);
   }
 
   Recognition recognize(img.Image image,Rect location) {
@@ -167,7 +167,7 @@ class Recognizer {
     print(input.shape.toString());
 
     //TODO output array
-    List output = List.filled(1*192, 0).reshape([1,192]);
+    List output = List.filled(1*512, 0).reshape([1,512]);
 
     //TODO performs inference
     final runs = DateTime.now().millisecondsSinceEpoch;
@@ -180,30 +180,29 @@ class Recognizer {
 
      //TODO looks for the nearest embeeding in the database and returns the pair
      Pair pair = findNearest(outputArray);
-     print("distance= ${pair.distance}");
+    // print("distance= ${pair.distance}");
 
      return Recognition(pair.name,location,outputArray,pair.distance,pair.id);
   }
 
   //TODO  looks for the nearest embeeding in the database and returns the pair which contain information of registered face with which face is most similar
-  findNearest(List<double> emb){
+  findNearest(List<double> emb) {
     Pair pair = Pair("Unknown", -5,"");
     for (MapEntry<String, Recognition> item in registered.entries) {
       final String name = item.key;
       List<double> knownEmb = item.value.embeddings;
       final staff_id=item.value.id;
-      double distance = 0;
+      double distance = 0.0;
       for (int i = 0; i < emb.length; i++) {
-        double diff = emb[i] -
-            knownEmb[i];
+        double diff = emb[i] - knownEmb[i];
         distance += diff*diff;
       }
+      print("44455555"+distance.toString());
       distance = sqrt(distance);
-      if (pair.distance == -5 || distance < pair.distance) {
+      if (pair.distance == -5|| distance < pair.distance) {
         pair.distance = distance;
         pair.name = name;
         pair.id=staff_id;
-
       }
     }
     return pair;

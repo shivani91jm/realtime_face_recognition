@@ -15,7 +15,7 @@ class AttendanceController extends GetxController {
   RxBool isLoading=false.obs;
   RxList<Data> userList=<Data>[].obs;
   BuildContext? context=Get.context;
-  void attendanceController(String staff_id,BuildContext context) async {
+  void attendanceController(String staff_id,BuildContext context,String name) async {
     try {
       final result = await InternetAddress.lookup('google.com');
       if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
@@ -46,7 +46,7 @@ class AttendanceController extends GetxController {
           print("vdbvsbd"+res.toString());
            if(res['message']=="Attendance recorded successfully")
            {
-
+             CustomSnackBar.successSnackBar("Hey ${name} Attendance Successfully",context!);
               Navigator.pushReplacement(context!, MaterialPageRoute(builder: (context) => DashBoard()),);
            }
         }

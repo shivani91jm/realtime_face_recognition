@@ -28,10 +28,20 @@ class RegistrationController extends GetxController{
         print(""+formattedDate.toString());
         final SharedPreferences prefs = await SharedPreferences.getInstance();
        var admin_id= await prefs.getString('admin_id')??"";
-       var url= Urls.BaseUrls+'facerecognition/get_data.php?name=${name}&face_model=${facemodel}&time=${formattedDate}&admin_id=${admin_id}';
+        var body = jsonEncode(<String, String>{
+          'name':name,
+          'face_model':facemodel.toString(),
+          'time': formattedDate,
+          'admin_id':admin_id,
+
+        });
+       var url= Urls.BaseUrls+'facerecognition/get_data.php?';
         print("res body"+url.toString());
-        final response = await http.get(Uri.parse(url), headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',},);
+        final response = await http.post(Uri.parse(url),
+          headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',},
+          body: body
+        );
         print("response"+response.body.toString());
         if (response.statusCode == 200) {
           isLoading2.value=false;

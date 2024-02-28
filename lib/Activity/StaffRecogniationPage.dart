@@ -18,7 +18,7 @@ import 'package:realtime_face_recognition/Model/Userattendancemodel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
-class StaffRecognationPage extends StatefulWidget {
+class StaffRecognationPage extends StatefulWidget  {
   late List<CameraDescription> cameras;
   StaffRecognationPage({Key? key, required this.cameras}) : super(key: key);
   @override
@@ -39,6 +39,7 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
   //TODO declare face recognizer
   late Recognizer recognizer;
   final AudioPlayer _audioPlayer = AudioPlayer();
+  static  String flag="1";
   @override
   void initState() {
     super.initState();
@@ -68,7 +69,7 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
 
           }
         });
-        setState(() {});
+       setState(() {});
       });
     } on CameraException catch (e) {
       debugPrint("camera error $e");
@@ -78,10 +79,11 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
   //TODO close all resources
   @override
   void dispose() {
+
     controller?.dispose();
     recognitions.clear();
     faceDetector.close();
-   // _audioPlayer.dispose();
+    // _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -89,20 +91,28 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
   dynamic _scanResults;
   CameraImage? frame;
   doFaceDetectionOnFrame() async {
-    //TODO convert frame into InputImage format
-    InputImage inputImage = getInputImage();
-    //TODO pass InputImage to face detection model and detect faces
-    List<Face> faces = await faceDetector.processImage(inputImage);
-     setState(() {
+    try{
 
+      //TODO convert frame into InputImage format
+      InputImage inputImage = getInputImage();
+      //TODO pass InputImage to face detection model and detect faces
+      List<Face> faces = await faceDetector.processImage(inputImage);
+      //TODO perform face recognition on detected faces
+
+      setState(() {
         _scanResults = faces;
+
        // isBusy = false;
 
-    });
-    //TODO perform face recognition on detected faces
-    performFaceRecognition(faces);
+      });
+      performFaceRecognition(faces);
+    } catch(e){
+    //  setState(() => isBusy = false);
+    }
+
 
   }
+
 
   img.Image? image;
   bool register = false;
@@ -116,54 +126,63 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
 
     for (Face face in faces) {
       Rect faceRect = face.boundingBox;
+
+      num left = faceRect.left<0?0:faceRect.left;
+      num top = faceRect.top<0?0:faceRect.top;
+      num right = faceRect.right>image!.width?image!.width-1:faceRect.right;
+      num bottom = faceRect.bottom>image!.height?image!.height-1:faceRect.bottom;
+      num width = right - left;
+      num height = bottom - top;
+
+
+      img.Image croppedFace = img.copyCrop(image!,x:left.toInt(),y:top.toInt(),width:width.toInt(),height:height.toInt());
       //TODO crop face
-      img.Image croppedFace = img.copyCrop(image!, x:faceRect.left.toInt(),y:faceRect.top.toInt(),width:faceRect.width.toInt(),height:faceRect.height.toInt());
+     // img.Image croppedFace = img.copyCrop(image!, x:faceRect.left.toInt(),y:faceRect.top.toInt(),width:faceRect.width.toInt(),height:faceRect.height.toInt());
 
       //TODO pass cropped face to face recognition model
       Recognition recognition = recognizer.recognize(croppedFace!, face.boundingBox);
-      if(recognition.distance>0.9){
+      if(recognition.distance>1){
         recognition.name = "Unknown";
-
       }
 
       recognitions.add(recognition);
       if(recognition.name!="Unknown")
-        {
+      {
 
-          if (mounted) {
-            _audioPlayer
-              ..stop()
-              ..setReleaseMode(ReleaseMode.release)
-              ..play(AssetSource("sucessAttendance.m4r"));
-               Navigator.pushReplacement(context, MaterialPageRoute(
-                builder: (context) =>
-                    UserDetailsView(user: recognition,)),
-               );
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('page', '1');
-          }
-
+        if (mounted) {
+          _audioPlayer
+            ..stop()
+            ..setReleaseMode(ReleaseMode.release)
+            ..play(AssetSource("sucessAttendance.m4r"));
+          Navigator.pushReplacement(context, MaterialPageRoute(
+              builder: (context) =>
+                  UserDetailsView(user: recognition,)),
+          );
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('page', '1');
         }
+
+      }
       else
+      {
+        if(mounted)
         {
-          if(mounted)
-            {
-              CustomSnackBar.errorSnackBar("Unknown User",context);
 
-            }
+          setState(() {
+           // _scanResults=null;
+            flag="2";
+            isBusy=false;
+
+          });
+          CustomSnackBar.errorSnackBar("Unknown User",context);
+
         }
+      }
 
 
 
     }
-    Timer(const Duration(seconds: 2), () async{
-      if (mounted) {
-        setState(() {
-          isBusy = false;
-        });
-      }
 
-    });
   }
   // TODO method to convert CameraImage to Image
   img.Image convertYUV420ToImage(CameraImage cameraImage) {
@@ -175,8 +194,7 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     final image = img.Image(width:width, height:height);
     for (var w = 0; w < width; w++) {
       for (var h = 0; h < height; h++) {
-        final uvIndex =
-            uvPixelStride * (w / 2).floor() + uvRowStride * (h / 2).floor();
+        final uvIndex = uvPixelStride * (w / 2).floor() + uvRowStride * (h / 2).floor();
         final index = h * width + w;
         final yIndex = h * yRowStride + w;
 
@@ -248,9 +266,9 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
       return const  Center(child: CircularProgressIndicator());
     }
     if(_scanResults==null)
-      {
-        return const Center(child: Text(""));
-      }
+    {
+      return const Center(child: Text(""));
+    }
     final Size imageSize = Size(
       controller.value.previewSize!.height,
       controller.value.previewSize!.width,
@@ -274,7 +292,7 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
 
     initializeCamera(widget.cameras[1]);
     setState(() {
-     // controller;
+      // controller;
       isBusy  = false;
     });
   }
@@ -373,17 +391,17 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
       appBar: AppBar(
         backgroundColor: Colors.blue,
         actions: [
-                         IconButton(
-                          icon: const Icon(
-                            Icons.cached,
-                            color: Colors.white,
-                          ),
-                          iconSize: 40,
-                          color: Colors.black,
-                          onPressed: () {
-                            _toggleCameraDirection();
-                          },
-                        ),
+          IconButton(
+            icon: const Icon(
+              Icons.cached,
+              color: Colors.white,
+            ),
+            iconSize: 40,
+            color: Colors.black,
+            onPressed: () {
+              _toggleCameraDirection();
+            },
+          ),
         ],
       ),
       backgroundColor: Colors.black,

@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
 
 import 'package:provider/provider.dart';
@@ -32,7 +33,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<ShowStaffListProvider>(create: (_) => ShowStaffListProvider()),
         ChangeNotifierProvider<ShowAttendanceList>(create: (_) => ShowAttendanceList()),
       ],
-      child: MaterialApp(
+      child: GetMaterialApp(
         debugShowCheckedModeBanner: false,
         home: SplashScreen(),
       ),

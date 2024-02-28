@@ -134,7 +134,7 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
       setState(() {
 
           isBusy = false;
-          _scanResults = recognitions;
+         // _scanResults = recognitions;
 
       });
     }
@@ -267,9 +267,7 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
 
   // TODO Show rectangles around detected faces
   Widget buildResult() {
-    if  (
-        controller == null ||
-        !controller.value.isInitialized) {
+    if  (controller == null || !controller.value.isInitialized) {
       return const Center(child: CircularProgressIndicator());
     }
     if(_scanResults == null)

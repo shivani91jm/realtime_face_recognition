@@ -25,7 +25,7 @@ class _UserDetailsViewState extends State<UserDetailsView> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    controller.attendanceController(widget.user.id.toString(),context);
+    controller.attendanceController(widget.user.id.toString(),context,widget.user.name);
 
 
   }

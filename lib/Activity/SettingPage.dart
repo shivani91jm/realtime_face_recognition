@@ -55,10 +55,7 @@ class _SettingPageState extends State<SettingPage> {
   {
     // TODO: implement initState
     super.initState();
-
-
     getValueOfSharedPrefrence();
-
     getValue();
   }
   @override
