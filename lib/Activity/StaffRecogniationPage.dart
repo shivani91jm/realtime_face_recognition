@@ -92,25 +92,55 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
   CameraImage? frame;
   doFaceDetectionOnFrame() async {
     try{
-
+      recognitions.clear();
+      image = convertYUV420ToImage(frame!);
+      image = img.copyRotate(image!, angle: camDirec == CameraLensDirection.front ? 270 : 90);
       //TODO convert frame into InputImage format
       InputImage inputImage = getInputImage();
       //TODO pass InputImage to face detection model and detect faces
       List<Face> faces = await faceDetector.processImage(inputImage);
       //TODO perform face recognition on detected faces
 
-      setState(() {
-        _scanResults = faces;
+      double brightness = calculateBrightness(frame!);
+      print("brightness"+brightness.toString());
+      if (brightness < 100) {
+        // Low brightness detected, open fresh light or take appropriate action
+        print("Low brightness detected! Opening fresh light.");
+        CustomSnackBar.errorSnackBar("Low brightness detected!",context);
+      }
+      else
+        {
+          setState(() {
+            _scanResults = faces;
 
-       // isBusy = false;
+            // isBusy = false;
 
-      });
-      performFaceRecognition(faces);
+          });
+          performFaceRecognition(faces);
+        }
+
+
+
+
     } catch(e){
-    //  setState(() => isBusy = false);
+      CustomSnackBar.errorSnackBar("Face Detcion Problem Please Refresh",context);
+    }
+    finally{
+      //setState(() => isBusy = false);
     }
 
 
+  }
+
+  double calculateBrightness(CameraImage image) {
+    double sum = 0;
+    for (int y = 0; y < image.height; y++) {
+      for (int x = 0; x < image.width; x++) {
+        sum += image.planes[0].bytes[y * image.width + x] & 0xFF;
+      }
+    }
+    double brightness = sum / (image.width * image.height);
+    return brightness;
   }
 
 
@@ -118,7 +148,6 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
   bool register = false;
   // TODO perform Face Recognition
   performFaceRecognition(List<Face> faces) async {
-    recognitions.clear();
 
     //TODO convert CameraImage to Image and rotate it so that our frame will be in a portrait
     image = convertYUV420ToImage(frame!);
@@ -141,7 +170,7 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
 
       //TODO pass cropped face to face recognition model
       Recognition recognition = recognizer.recognize(croppedFace!, face.boundingBox);
-      if(recognition.distance>1){
+      if(recognition.distance>0.9){
         recognition.name = "Unknown";
       }
 
@@ -154,6 +183,7 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
             ..stop()
             ..setReleaseMode(ReleaseMode.release)
             ..play(AssetSource("sucessAttendance.m4r"));
+
           Navigator.pushReplacement(context, MaterialPageRoute(
               builder: (context) =>
                   UserDetailsView(user: recognition,)),
@@ -163,21 +193,16 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
         }
 
       }
-      else
-      {
-        if(mounted)
+      if(recognition.distance==-5)
         {
 
+            CustomSnackBar.errorSnackBar("Unknown User", context);
+
           setState(() {
-           // _scanResults=null;
-            flag="2";
             isBusy=false;
-
           });
-          CustomSnackBar.errorSnackBar("Unknown User",context);
-
         }
-      }
+
 
 
 
