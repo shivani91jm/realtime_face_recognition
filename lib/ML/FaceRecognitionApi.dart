@@ -264,12 +264,8 @@ class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
                       UserDetailsView(user: user,)),
               );
             }
-            else {
-              CustomSnackBar.successSnackBar("No User Found", context);
-            }
+
           }
-
-
           else
             {
               CustomSnackBar.successSnackBar("No User Found", context);
