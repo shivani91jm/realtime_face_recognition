@@ -15,6 +15,7 @@ import 'package:realtime_face_recognition/Activity/LoginPage.dart';
 import 'package:realtime_face_recognition/Activity/StaffRecogniationPage.dart';
 import 'package:realtime_face_recognition/Activity/StaffRegistrationPage.dart';
 import 'package:realtime_face_recognition/Constants/AppConstants.dart';
+import 'package:realtime_face_recognition/ML/FaceRecognitionApi.dart';
 import 'package:realtime_face_recognition/Utils/AppFontFamily.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -247,7 +248,7 @@ class _SettingPageState extends State<SettingPage> {
                                       var camera=  await availableCameras();
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(builder: (context) =>  StaffRecognationPage(cameras: camera,)),
+                                        MaterialPageRoute(builder: (context) =>  StaffRecognationPage2(cameras: camera,)),
                                       );
                                     },
                                     child: Container(
@@ -276,7 +277,7 @@ class _SettingPageState extends State<SettingPage> {
                                       var camera=  await availableCameras();
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(builder: (context) =>  StaffRecognationPage(cameras: camera,)),
+                                        MaterialPageRoute(builder: (context) =>  StaffRecognationPage2(cameras: camera,)),
                                       );
                                      //  Navigator.push(context, MaterialPageRoute(builder: (_) => AutoDectionPage(cameras: camera)));
 

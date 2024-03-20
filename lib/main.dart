@@ -7,12 +7,11 @@ import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
 
 import 'package:provider/provider.dart';
-import 'package:realtime_face_recognition/Activity/DashboardPage.dart';
-import 'package:realtime_face_recognition/Activity/LoginPage.dart';
+
 import 'package:realtime_face_recognition/Activity/SplashScreen.dart';
-import 'package:realtime_face_recognition/Activity/StaffRecogniationPage.dart';
-import 'package:realtime_face_recognition/Activity/StaffRegistrationPage.dart';
+
 import 'package:realtime_face_recognition/Controller/BottomNavigationProvider.dart';
+import 'package:realtime_face_recognition/Controller/CameraProvider.dart';
 import 'package:realtime_face_recognition/Controller/ShowAttendaceDailyListController.dart';
 import 'package:realtime_face_recognition/Controller/ShowStaffListProvider.dart';
 
@@ -20,7 +19,6 @@ import 'package:realtime_face_recognition/Controller/ShowStaffListProvider.dart'
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-
   runApp(MyApp());
 }
 
@@ -31,7 +29,10 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider<BottomNavigationProvider>(create: (_) => BottomNavigationProvider()),
         ChangeNotifierProvider<ShowStaffListProvider>(create: (_) => ShowStaffListProvider()),
+        ChangeNotifierProvider<CameraProvider>(create: (_) => CameraProvider()),
+
         ChangeNotifierProvider<ShowAttendanceList>(create: (_) => ShowAttendanceList()),
+
       ],
       child: GetMaterialApp(
         debugShowCheckedModeBanner: false,

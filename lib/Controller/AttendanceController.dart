@@ -15,6 +15,7 @@ class AttendanceController extends GetxController {
   RxBool isLoading=false.obs;
   RxList<Data> userList=<Data>[].obs;
   BuildContext? context=Get.context;
+
   void attendanceController(String staff_id,BuildContext context,String name) async {
     try {
       final result = await InternetAddress.lookup('google.com');

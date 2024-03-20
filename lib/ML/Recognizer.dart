@@ -22,14 +22,16 @@ import 'package:http/http.dart' as http;
 class Recognizer {
   late Interpreter interpreter;
   late InterpreterOptions _interpreterOptions;
-  static const int WIDTH = 160;
-  static const int HEIGHT = 160;
+  static const int WIDTH = 112;
+  static const int HEIGHT = 112;
+  double threshold = 1.5;
   final dbHelper = DatabaseHelper();
   Map<String,Recognition> registered = Map();
   @override
-  String get modelName => 'assets/facenet.tflite';
+  String get modelName => 'assets/mobile_face_net.tflite';
   final FirebaseService firebaseService = FirebaseService();
   List<Data>? users;
+  List<double>? predictedArray;
   Recognizer({int? numThreads}) {
     _interpreterOptions = InterpreterOptions();
 
@@ -62,7 +64,7 @@ class Recognizer {
 
             if(info==true)
             {
-              users=res.data;
+               users=res.data;
 
             }
             loadRegisteredFaces();
@@ -76,7 +78,6 @@ class Recognizer {
           // Navigator.push(context!, MaterialPageRoute(builder: (context) => LoginPage()),);
         }
         else if (response.statusCode == 500) {
-
           print("data" + response.body.toString());
         }
         else {
@@ -98,15 +99,16 @@ class Recognizer {
   }
   void loadRegisteredFaces() async {
     registered.clear();
-
-
     for(int i=0;i<users!.length;i++)
       {
              String name = users![i].name.toString();
+             var url= users![i].faceModel;
+           //  String modifiedUrl = url.replaceFirst('\/home\/hqcj8lltjqyi\/public_html\/', '');
+           //  print(modifiedUrl);
              List<double> embd = parseStringToList(users![i].faceModel);
              print(embd);
              String staff_id=users![i].id.toString();
-            Recognition recognition = Recognition(name,Rect.zero,embd,0,staff_id);
+             Recognition recognition = Recognition(name,Rect.zero,embd,0,staff_id);
             registered.putIfAbsent(name, () => recognition);
             print("R="+name);
       }
@@ -141,7 +143,7 @@ class Recognizer {
     }
   }
 
-  List<dynamic> imageToArray(img.Image inputImage){
+  List<dynamic> imageToArray(img.Image inputImage) {
     img.Image resizedImage = img.copyResize(inputImage!, width: WIDTH, height: HEIGHT);
     List<double> flattenedList = resizedImage.data!.expand((channel) => [channel.r, channel.g, channel.b]).map((value) => value.toDouble()).toList();
     Float32List float32Array = Float32List.fromList(flattenedList);
@@ -157,7 +159,7 @@ class Recognizer {
         }
       }
     }
-    return reshapedArray.reshape([1,160,160,3]);
+    return reshapedArray.reshape([1,112,112,3]);
   }
 
   Recognition recognize(img.Image image,Rect location) {
@@ -165,29 +167,28 @@ class Recognizer {
     //TODO crop face from image resize it and convert it to float array
     var input = imageToArray(image);
     print(input.shape.toString());
-
+   List output = List.generate(1, (index) => List.filled(192, 0));
     //TODO output array
-    List output = List.filled(1*512, 0).reshape([1,512]);
+ //  List output = List.filled(1*192, 0).reshape([1,192]);
 
     //TODO performs inference
     final runs = DateTime.now().millisecondsSinceEpoch;
     interpreter.run(input, output);
+//    output = output.reshape([192]);
+//    predictedArray = List.from(output);
     final run = DateTime.now().millisecondsSinceEpoch - runs;
     print('Time to run inference: $run ms$output');
 
     //TODO convert dynamic list to double list
-     List<double> outputArray = output.first.cast<double>();
+    predictedArray = output.first.cast<double>();
 
      //TODO looks for the nearest embeeding in the database and returns the pair
-     Pair pair = findNearest(outputArray);
+
+     Pair pair = findNearest(predictedArray!);
+
     print("distance= ${pair.distance}, pair.name==${pair.name}");
-
-      return Recognition(pair.name,location,outputArray,pair.distance,pair.id);
-
-
-
+    return Recognition(pair.name,location,predictedArray!,pair.distance,pair.id);
   }
-
   //TODO  looks for the nearest embeeding in the database and returns the pair which contain information of registered face with which face is most similar
   findNearest(List<double> emb) {
     Pair pair = Pair("Unknown", -5,"");
@@ -196,17 +197,21 @@ class Recognizer {
       List<double> knownEmb = item.value.embeddings;
       final staff_id=item.value.id;
       double distance = 0.0;
+      int minDist = 999;
       for (int i = 0; i < emb.length; i++) {
         double diff = emb[i] - knownEmb[i];
         distance += diff*diff;
       }
+
       print("44455555"+distance.toString()+"ddnm"+pair.distance.toString());
       distance = sqrt(distance);
-      if (pair.distance == -5|| distance < pair.distance) {
+
+      if (pair.distance <= -5 || distance <minDist) {
         pair.distance = distance;
         pair.name = name;
         pair.id=staff_id;
       }
+
     }
     return pair;
   }

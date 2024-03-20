@@ -15,7 +15,7 @@ class RegistrationController extends GetxController{
   RxBool isLoading=false.obs;
   RxBool isLoading2=false.obs;
   BuildContext? context=Get.context;
-  void addStaff(String name,List<dynamic> facemodel, BuildContext context) async
+  void addStaff(String name,String facemodel, BuildContext context) async
   {
     isLoading2.value=true;
     print("name"+name.toString());

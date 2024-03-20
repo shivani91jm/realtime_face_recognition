@@ -1,16 +1,21 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:realtime_face_recognition/Activity/user_details_view.dart';
 import 'package:realtime_face_recognition/Constants/AppConstants.dart';
 import 'package:realtime_face_recognition/Constants/custom_snackbar.dart';
+import 'package:realtime_face_recognition/Controller/CameraProvider.dart';
+import 'package:realtime_face_recognition/Controller/FaceDetectorWidget.dart';
 import 'package:realtime_face_recognition/ML/Recognition.dart';
 import 'package:realtime_face_recognition/ML/Recognizer.dart';
 import 'package:image/image.dart' as img;
@@ -50,7 +55,7 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     //TODO initialize face recognizer
     recognizer = Recognizer();
     //TODO initialize camera footage
-    initializeCamera(widget.cameras[1]);
+   // initializeCamera(widget.cameras[1]);
     // initCamera(widget.cameras![1]);
   }
 
@@ -60,6 +65,7 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     try {
       await controller.initialize().then((_) {
         if (!mounted) return;
+
         controller.startImageStream((image) async {
           if(!isBusy)
           {
@@ -70,7 +76,12 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
           }
         });
        setState(() {});
-      });
+      //   controller?.startImageStream(doFaceDetectionOnFrame()).then((value) {
+      //          isBusy=true;
+      //           frame = value;
+      //   });
+      //   setState(() {});
+       });
     } on CameraException catch (e) {
       debugPrint("camera error $e");
     }
@@ -93,35 +104,18 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
   doFaceDetectionOnFrame() async {
     try{
       recognitions.clear();
-      image = convertYUV420ToImage(frame!);
-      image = img.copyRotate(image!, angle: camDirec == CameraLensDirection.front ? 270 : 90);
+      // image = convertYUV420ToImage(frame!);
+      // image = img.copyRotate(image!, angle: camDirec == CameraLensDirection.front ? 270 : 90);
       //TODO convert frame into InputImage format
-      InputImage inputImage = getInputImage();
+      InputImage? inputImage = getInputImage();
       //TODO pass InputImage to face detection model and detect faces
-      List<Face> faces = await faceDetector.processImage(inputImage);
+      List<Face> faces = await faceDetector.processImage(inputImage!);
       //TODO perform face recognition on detected faces
-
-      double brightness = calculateBrightness(frame!);
-      print("brightness"+brightness.toString());
-      if (brightness < 100) {
-        // Low brightness detected, open fresh light or take appropriate action
-        print("Low brightness detected! Opening fresh light.");
-        CustomSnackBar.errorSnackBar("Low brightness detected!",context);
-      }
-      else
-        {
-          setState(() {
+      setState(() {
             _scanResults = faces;
-
-            // isBusy = false;
-
+            isBusy = false;
           });
           performFaceRecognition(faces);
-        }
-
-
-
-
     } catch(e){
       CustomSnackBar.errorSnackBar("Face Detcion Problem Please Refresh",context);
     }
@@ -155,55 +149,50 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
 
     for (Face face in faces) {
       Rect faceRect = face.boundingBox;
-
       num left = faceRect.left<0?0:faceRect.left;
       num top = faceRect.top<0?0:faceRect.top;
       num right = faceRect.right>image!.width?image!.width-1:faceRect.right;
       num bottom = faceRect.bottom>image!.height?image!.height-1:faceRect.bottom;
       num width = right - left;
       num height = bottom - top;
-
-
       img.Image croppedFace = img.copyCrop(image!,x:left.toInt(),y:top.toInt(),width:width.toInt(),height:height.toInt());
-      //TODO crop face
-     // img.Image croppedFace = img.copyCrop(image!, x:faceRect.left.toInt(),y:faceRect.top.toInt(),width:faceRect.width.toInt(),height:faceRect.height.toInt());
 
       //TODO pass cropped face to face recognition model
-      Recognition recognition = recognizer.recognize(croppedFace!, face.boundingBox);
+      Recognition recognition = recognizer.recognize(croppedFace!, faceRect);
       if(recognition.distance>0.9){
         recognition.name = "Unknown";
       }
 
       recognitions.add(recognition);
-      if(recognition.name!="Unknown")
+
+
+      if(recognition.distance==-5)
       {
 
-        if (mounted) {
-          _audioPlayer
-            ..stop()
-            ..setReleaseMode(ReleaseMode.release)
-            ..play(AssetSource("sucessAttendance.m4r"));
+        CustomSnackBar.errorSnackBar("Unknown User", context);
 
-          Navigator.pushReplacement(context, MaterialPageRoute(
-              builder: (context) =>
-                  UserDetailsView(user: recognition,)),
-          );
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('page', '1');
-        }
-
+        setState(() {
+          isBusy=false;
+        });
       }
-      if(recognition.distance==-5)
+      else
         {
-
-            CustomSnackBar.errorSnackBar("Unknown User", context);
-
-          setState(() {
-            isBusy=false;
-          });
+         if(recognition.name!="Unknown")
+           {
+             // if (mounted) {
+             //   _audioPlayer
+             //     ..stop()
+             //     ..setReleaseMode(ReleaseMode.release)
+             //     ..play(AssetSource("sucessAttendance.m4r"));
+             //   Navigator.pushReplacement(context, MaterialPageRoute(
+             //       builder: (context) =>
+             //           UserDetailsView(user: ,)),
+             //   );
+             //   final prefs = await SharedPreferences.getInstance();
+             //   await prefs.setString('page', '1');
+             // }
+           }
         }
-
-
 
 
     }
@@ -245,6 +234,12 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
 
     return 0xff000000 | ((b << 16) & 0xff0000) | ((g << 8) & 0xff00) | (r & 0xff);
   }
+  final _orientations = {
+    DeviceOrientation.portraitUp: 0,
+    DeviceOrientation.landscapeLeft: 90,
+    DeviceOrientation.portraitDown: 180,
+    DeviceOrientation.landscapeRight: 270,
+  };
 
   //TODO convert CameraImage to InputImage
   InputImage getInputImage() {
@@ -285,24 +280,24 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
   }
 
   // TODO Show rectangles around detected faces
-  Widget buildResult() {
-    if (controller == null ||
-        !controller.value.isInitialized) {
-      return const  Center(child: CircularProgressIndicator());
-    }
-    if(_scanResults==null)
-    {
-      return const Center(child: Text(""));
-    }
-    final Size imageSize = Size(
-      controller.value.previewSize!.height,
-      controller.value.previewSize!.width,
-    );
-    CustomPainter painter = FaceDetectorPainter(imageSize, _scanResults, camDirec);
-    return CustomPaint(
-      painter: painter,
-    );
-  }
+  // Widget buildResult() {
+  //   if (controller == null ||
+  //       !controller.value.isInitialized) {
+  //     return const  Center(child: CircularProgressIndicator());
+  //   }
+  //   if(_scanResults==null)
+  //   {
+  //     return const Center(child: Text(""));
+  //   }
+  //   final Size imageSize = Size(
+  //     controller.value.previewSize!.height,
+  //     controller.value.previewSize!.width,
+  //   );
+  //   CustomPainter painter = FaceDetectorPainter(imageSize, _scanResults, camDirec);
+  //   return CustomPaint(
+  //     painter: painter,
+  //   );
+  // }
 
   //TODO toggle camera direction
   void _toggleCameraDirection() async {
@@ -348,70 +343,20 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
       );
 
       //TODO View for displaying rectangles around detected aces
-      stackChildren.add(
-        Positioned(
-            top: 0.0,
-            left: 0.0,
-            width: size.width,
-            height: size.height,
-            child: buildResult()),
-      );
+      // stackChildren.add(
+      //   Positioned(
+      //       top: 0.0,
+      //       left: 0.0,
+      //       width: size.width,
+      //       height: size.height,
+      //       child: buildResult()),
+      // );
     }
 
     //TODO View for displaying the bar to switch camera direction or for registering faces
-    // stackChildren.add(Positioned(
-    //   top: size.height - 140,
-    //   left: 0,
-    //   width: size.width,
-    //   height: 80,
-    //   child: Card(
-    //     margin: const EdgeInsets.only(left: 20, right: 20),
-    //     color: Colors.blue,
-    //     child: Center(
-    //       child: Container(
-    //         child: Column(
-    //           mainAxisAlignment: MainAxisAlignment.center,
-    //           crossAxisAlignment: CrossAxisAlignment.center,
-    //           children: [
-    //             Row(
-    //               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-    //               children: [
-    //                 IconButton(
-    //                   icon: const Icon(
-    //                     Icons.cached,
-    //                     color: Colors.white,
-    //                   ),
-    //                   iconSize: 40,
-    //                   color: Colors.black,
-    //                   onPressed: () {
-    //                     _toggleCameraDirection();
-    //                   },
-    //                 ),
-    //                 Container(
-    //                   width: 30,
-    //                 ),
-    //                 IconButton(
-    //                   icon: const Icon(
-    //                     Icons.face_retouching_natural,
-    //                     color: Colors.white,
-    //                   ),
-    //                   iconSize: 40,
-    //                   color: Colors.black,
-    //                   onPressed: () {
-    //                     setState(() {
-    //                       register = true;
-    //                     });
-    //                   },
-    //                 )
-    //               ],
-    //             ),
-    //           ],
-    //         ),
-    //       ),
-    //     ),
-    //   ),
-    // ));
 
+    final cameraProvider = Provider.of<CameraProvider>(context);
+    final List<Face> faces = cameraProvider.detectedFaces;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
@@ -430,58 +375,49 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
         ],
       ),
       backgroundColor: Colors.black,
-      body: Container(
-          margin: const EdgeInsets.only(top: 0),
-          color: Colors.black,
-          child: Stack(
-            children: stackChildren,
-          )
+      body:  Consumer<CameraProvider>(
+        builder: (context, cameraProvider, child) {
+          if (cameraProvider.cameraController == null ||
+              !cameraProvider.cameraController!.value.isInitialized) {
+            return Center(child: CircularProgressIndicator());
+          }
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              CameraPreview(cameraProvider.cameraController!),
+              FaceDetectorWidget(),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
 class FaceDetectorPainter extends CustomPainter {
-  FaceDetectorPainter(this.absoluteImageSize, this.faces, this.camDire2);
+  FaceDetectorPainter(this.faces);
 
-  final Size absoluteImageSize;
-  final List<Face> faces;
-  CameraLensDirection camDire2;
+  //final Size absoluteImageSize;
+ final List<Face> faces;
+//  CameraLensDirection camDire2;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double scaleX = size.width / absoluteImageSize.width;
-    final double scaleY = size.height / absoluteImageSize.height;
+    // final double scaleX = size.width / absoluteImageSize.width;
+    // final double scaleY = size.height / absoluteImageSize.height;
+
 
     final Paint paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0
-      ..color = Colors.green;
+      ..strokeWidth = 2.0
+      ..color = Colors.red;
 
-    for (Face face in faces) {
-      canvas.drawRect(
-        Rect.fromLTRB(
-          camDire2 == CameraLensDirection.front
-              ? (absoluteImageSize.width - face.boundingBox.right) * scaleX
-              : face.boundingBox.left * scaleX,
-          face.boundingBox.top * scaleY,
-          camDire2 == CameraLensDirection.front
-              ? (absoluteImageSize.width - face.boundingBox.left) * scaleX
-              : face.boundingBox.right * scaleX,
-          face.boundingBox.bottom * scaleY,
-        ),
-        paint,
+    for (var face in faces) {
+      final Rect rect = Rect.fromPoints(
+        Offset(face.boundingBox.left, face.boundingBox.top),
+        Offset(face.boundingBox.right, face.boundingBox.bottom),
       );
-
-      // TextSpan span = TextSpan(
-      //     style: const TextStyle(color: Colors.white, fontSize: 20),
-      //     text: "${face.name}  ${face.distance.toStringAsFixed(2)}");
-      // TextPainter tp = TextPainter(
-      //     text: span,
-      //     textAlign: TextAlign.left,
-      //     textDirection: TextDirection.ltr);
-      // tp.layout();
-      // tp.paint(canvas, Offset(face.location.left*scaleX, face.location.top*scaleY));
+      canvas.drawRect(rect, paint);
     }
 
   }
@@ -489,5 +425,31 @@ class FaceDetectorPainter extends CustomPainter {
   @override
   bool shouldRepaint(FaceDetectorPainter oldDelegate) {
     return true;
+  }
+}
+class FaceDetectorWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<CameraProvider>(
+      builder: (context, cameraProvider, child) {
+        final detectedFaces = cameraProvider.detectedFaces;
+        return Stack(
+          children: [
+            for (var face in detectedFaces)
+              Positioned(
+                left: face.boundingBox.left,
+                top: face.boundingBox.top,
+                width: face.boundingBox.width,
+                height: face.boundingBox.height,
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.red, width: 2.0),
+                  ),
+                ),
+              ) ,
+          ],
+        );
+      },
+    );
   }
 }

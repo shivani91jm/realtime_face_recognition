@@ -6,11 +6,12 @@ import 'package:get/get.dart';
 
 import 'package:realtime_face_recognition/Controller/AttendanceController.dart';
 import 'package:realtime_face_recognition/ML/Recognition.dart';
+import 'package:realtime_face_recognition/ML/UserData.dart';
 
 
 
 class UserDetailsView extends StatefulWidget {
-  final Recognition user;
+  final UserData user;
   const UserDetailsView({Key? key, required this.user}) : super(key: key);
 
   @override
@@ -26,8 +27,6 @@ class _UserDetailsViewState extends State<UserDetailsView> {
     // TODO: implement initState
     super.initState();
     controller.attendanceController(widget.user.id.toString(),context,widget.user.name);
-
-
   }
   @override
   Widget build(BuildContext context) {

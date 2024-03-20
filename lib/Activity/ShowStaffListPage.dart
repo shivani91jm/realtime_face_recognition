@@ -29,8 +29,7 @@ class _ShowStaffListPageState extends State<ShowStaffListPage> {
 
         ),),
       ),
-      body:  postMdl.loading
-          ?  Padding(
+      body:  postMdl.loading ?  Padding(
         padding: const EdgeInsets.all(8.0),
         child: ListView.builder(
             shrinkWrap: true,
@@ -48,6 +47,10 @@ class _ShowStaffListPageState extends State<ShowStaffListPage> {
           :  ListView.builder(
         itemCount: postMdl.data!.data!.length,
         itemBuilder: (context, i) {
+          var image=postMdl.data!.data![i].faceModel;
+          String modifiedUrl = image.replaceFirst(
+              '\/home\/hqcj8lltjqyi\/public_html\/', '');
+          print(modifiedUrl);
           return Container(
             margin: EdgeInsets.all(5),
             child: GestureDetector(
@@ -75,8 +78,7 @@ class _ShowStaffListPageState extends State<ShowStaffListPage> {
                                 decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(50.0),
                                     image: DecorationImage(
-                                        image: NetworkImage(
-                                          "https://images.unsplash.com/1/iphone-4-closeup.jpg?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
+                                        image: NetworkImage("https://"+modifiedUrl,
                                         ), fit: BoxFit.cover)
                                 ),
                               ),
@@ -110,11 +112,7 @@ class _ShowStaffListPageState extends State<ShowStaffListPage> {
                           icon: Icon(Icons.arrow_forward_ios_rounded,color:  Colors.black38,),
                           onPressed: () async
                           {
-
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) =>  StaffDetailsPage()),
-                            );
+                            Navigator.push(context, MaterialPageRoute(builder: (context) =>  StaffDetailsPage()),);
                           },
                         ),
                       ),
@@ -123,10 +121,7 @@ class _ShowStaffListPageState extends State<ShowStaffListPage> {
             ),
           );
         },
-      )
-        // Specify the provider to use and the data to listen to
-
-      );
+      ));
 
   }
 }

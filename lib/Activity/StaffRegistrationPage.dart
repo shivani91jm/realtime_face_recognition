@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -35,7 +37,9 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
 
   //TODO declare face recognizer
   late Recognizer recognizer;
-
+  bool register = false;
+  File? _image;
+  var image;
   @override
   void initState() {
     super.initState();
@@ -63,17 +67,79 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
           if(!isBusy)
           {
             isBusy=true;
-            frame = image;
-            doFaceDetectionOnFrame();
-
           }
         });
-        setState(() {});
+       setState(() {});
       });
     } on CameraException catch (e) {
       debugPrint("camera error $e");
     }
   }
+  Future takePicture() async {
+    if (!controller.value.isInitialized) {return null;}
+    if (controller.value.isTakingPicture) {return null;}
+    try {
+      await controller.setFlashMode(FlashMode.off);
+      XFile picture = await controller.takePicture();
+      setState((){
+        _image = File(picture.path);
+
+      });
+      doFaceDetection();
+      print("fhdhhfhjf"+picture.path.toString());
+      // Navigator.push(context, MaterialPageRoute(
+      //     builder: (context) => PreviewPage(
+      //       picture: picture,
+      //     )));
+    } on CameraException catch (e) {
+      debugPrint('Error occured while taking picture: $e');
+      return null;
+    }
+  }
+  List<Face> faces = [];
+  doFaceDetection() async {
+    //TODO remove rotation of camera images
+    _image = await removeRotation(_image!);
+    String base64Image = base64Encode(_image!.readAsBytesSync());
+    image = await _image?.readAsBytes();
+  // image = await decodeImageFromList(image);
+
+    //TODO passing input to face detector and getting detected faces
+    InputImage inputImage = InputImage.fromFile(_image!);
+    final bytes = _image!.readAsBytesSync();//await File(cropedFace!.path).readAsBytes();
+    img.Image? faceImg = img.decodeImage(bytes!);
+    //   img.Image faceImg2 = img.copyCrop(faceImg!,x:left.toInt(),y:top.toInt(),width:width.toInt(),height:height.toInt());
+    showFaceRegistrationDialogue(base64Image,Uint8List.fromList(img.encodeBmp(faceImg!)));
+     faces = await faceDetector.processImage(inputImage);
+    for (Face face in faces) {
+      // Rect faceRect = face.boundingBox;
+      // num left = faceRect.left<0?0:faceRect.left;
+      // num top = faceRect.top<0?0:faceRect.top;
+      // num right = faceRect.right>image.width?image.width-1:faceRect.right;
+      // num bottom = faceRect.bottom>image.height?image.height-1:faceRect.bottom;
+      // num width = right - left;
+      // num height = bottom - top;
+
+      //TODO crop face
+      final bytes = _image!.readAsBytesSync();//await File(cropedFace!.path).readAsBytes();
+      img.Image? faceImg = img.decodeImage(bytes!);
+   //   img.Image faceImg2 = img.copyCrop(faceImg!,x:left.toInt(),y:top.toInt(),width:width.toInt(),height:height.toInt());
+      showFaceRegistrationDialogue(base64Image,Uint8List.fromList(img.encodeBmp(faceImg!)));
+    //  Recognition recognition = recognizer.recognize(faceImg2, faceRect);
+
+    }
+  //  drawRectangleAroundFaces();
+
+    //TODO call the method to perform face recognition on detected faces
+  }
+
+  //TODO remove rotation of camera images
+  removeRotation(File inputImage) async {
+    final img.Image? capturedImage = img.decodeImage(await File(inputImage!.path).readAsBytes());
+    final img.Image orientedImage = img.bakeOrientation(capturedImage!);
+    return await File(_image!.path).writeAsBytes(img.encodeJpg(orientedImage));
+  }
+
 
   //TODO close all resources
   @override
@@ -81,69 +147,21 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
     controller?.dispose();
     super.dispose();
   }
-
-  //TODO face detection on a frame
-  dynamic _scanResults;
-  CameraImage? frame;
-  doFaceDetectionOnFrame() async {
-    //TODO convert frame into InputImage format
-    InputImage inputImage = getInputImage();
-    //TODO pass InputImage to face detection model and detect faces
-    List<Face> faces = await faceDetector.processImage(inputImage);
-
-    //TODO perform face recognition on detected faces
-    performFaceRecognition(faces);
-    if(mounted) {
-      setState(() {
-        _scanResults = faces;
-        isBusy = false;
-      });
-    }
+  drawRectangleAroundFaces() async {
+    image = await _image?.readAsBytes();
+    image = await decodeImageFromList(image);
+    print("${image.width}   ${image.height}");
+    setState(() {
+      image;
+      faces;
+    });
   }
 
-  img.Image? image;
-  bool register = false;
-  // TODO perform Face Recognition
-  performFaceRecognition(List<Face> faces) async {
-    recognitions.clear();
 
-    //TODO convert CameraImage to Image and rotate it so that our frame will be in a portrait
-    image = convertYUV420ToImage(frame!);
-    image =img.copyRotate(image!, angle: camDirec == CameraLensDirection.front?270:90);
-
-    for (Face face in faces) {
-      Rect faceRect = face.boundingBox;
-      //TODO crop face
-      img.Image croppedFace = img.copyCrop(image!, x:faceRect.left.toInt(),y:faceRect.top.toInt(),width:faceRect.width.toInt(),height:faceRect.height.toInt());
-
-      //TODO pass cropped face to face recognition model
-      Recognition recognition = recognizer.recognize(croppedFace!, faceRect);
-      if(recognition.distance>1.15){
-        recognition.name = "Unknown";
-      }
-      recognitions.add(recognition);
-
-      //TODO show face registration dialogue
-      if(register){
-        showFaceRegistrationDialogue(croppedFace!,recognition);
-        register = false;
-      }
-
-    }
-    if(mounted) {
-      setState(() {
-
-          isBusy = false;
-         // _scanResults = recognitions;
-
-      });
-    }
-
-  }
 
   //TODO Face Registration Dialogue
   TextEditingController textEditingController = TextEditingController();
-  showFaceRegistrationDialogue(img.Image croppedFace, Recognition recognition) {
+  showFaceRegistrationDialogue(var data,var cropedFace) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -154,7 +172,11 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 20,),
-              Image.memory(Uint8List.fromList(img.encodeBmp(croppedFace!)),width: 200,height: 200,),
+              Image.memory(
+                cropedFace,
+                width: 200,
+                height: 200,
+              ),
               SizedBox(
                 width: 200,
                 child: TextField(
@@ -168,15 +190,15 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
                     var name=textEditingController.text;
                     if(name!="" && name!="null")
                       {
-                        recognizer.registerFaceInDB(name, recognition.embeddings);
-                        regcontroller.addStaff(name,recognition.embeddings,context);
+                      //  recognizer.registerFaceInDB(name,);
+                        regcontroller.addStaff(name,data.toString(),context);
                       }
                     else
                       {
                         CustomSnackBar.errorSnackBar("Please Enter your name",context!);
                       }
                 },
-                style: ElevatedButton.styleFrom(primary:Colors.blue,minimumSize: const Size(200,40)),
+                style: ElevatedButton.styleFrom(backgroundColor:Colors.blue,minimumSize: const Size(200,40)),
                 child:  regcontroller.isLoading2.value ? Center(child: Container(height: 20,width: 20,child: CircularProgressIndicator(),)) : Text('Register'),))
             ],
           ),
@@ -186,102 +208,22 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
   }
 
 
-  // TODO method to convert CameraImage to Image
-  img.Image convertYUV420ToImage(CameraImage cameraImage) {
-    final width = cameraImage.width;
-    final height = cameraImage.height;
-
-    final yRowStride = cameraImage.planes[0].bytesPerRow;
-    final uvRowStride = cameraImage.planes[1].bytesPerRow;
-    final uvPixelStride = cameraImage.planes[1].bytesPerPixel!;
-
-    final image = img.Image(width:width, height:height);
-
-    for (var w = 0; w < width; w++) {
-      for (var h = 0; h < height; h++) {
-        final uvIndex =
-            uvPixelStride * (w / 2).floor() + uvRowStride * (h / 2).floor();
-        final index = h * width + w;
-        final yIndex = h * yRowStride + w;
-
-        final y = cameraImage.planes[0].bytes[yIndex];
-        final u = cameraImage.planes[1].bytes[uvIndex];
-        final v = cameraImage.planes[2].bytes[uvIndex];
-
-        image.data!.setPixelR(w, h, yuv2rgb(y, u, v));//= yuv2rgb(y, u, v);
-      }
-    }
-    return image;
-  }
-  int yuv2rgb(int y, int u, int v) {
-    // Convert yuv pixel to rgb
-    var r = (y + v * 1436 / 1024 - 179).round();
-    var g = (y - u * 46549 / 131072 + 44 - v * 93604 / 131072 + 91).round();
-    var b = (y + u * 1814 / 1024 - 227).round();
-
-    // Clipping RGB values to be inside boundaries [ 0 , 255 ]
-    r = r.clamp(0, 255);
-    g = g.clamp(0, 255);
-    b = b.clamp(0, 255);
-
-    return 0xff000000 | ((b << 16) & 0xff0000) | ((g << 8) & 0xff00) | (r & 0xff);
-  }
-
-  //TODO convert CameraImage to InputImage
-  InputImage getInputImage() {
-    final WriteBuffer allBytes = WriteBuffer();
-    for (final Plane plane in frame!.planes) {
-      allBytes.putUint8List(plane.bytes);
-    }
-    final bytes = allBytes.done().buffer.asUint8List();
-    final Size imageSize = Size(frame!.width.toDouble(), frame!.height.toDouble());
-    final camera = description;
-    final imageRotation =
-    InputImageRotationValue.fromRawValue(camera.sensorOrientation);
-    // if (imageRotation == null) return;
-
-    final inputImageFormat = InputImageFormatValue.fromRawValue(frame!.format.raw);
-    // if (inputImageFormat == null) return null;
-
-    final planeData = frame!.planes.map(
-          (Plane plane) {
-        return InputImagePlaneMetadata(
-          bytesPerRow: plane.bytesPerRow,
-          height: plane.height,
-          width: plane.width,
-        );
-      },
-    ).toList();
-
-    final inputImageData = InputImageData(
-      size: imageSize,
-      imageRotation: imageRotation!,
-      inputImageFormat: inputImageFormat!,
-      planeData: planeData,
-    );
-
-    final inputImage = InputImage.fromBytes(bytes: bytes, inputImageData: inputImageData);
-
-    return inputImage;
-  }
 
   // TODO Show rectangles around detected faces
   Widget buildResult() {
     if  (controller == null || !controller.value.isInitialized) {
       return const Center(child: CircularProgressIndicator());
     }
-    if(_scanResults == null)
-    {
-      return const Center(child: Text(""));
-    }
 
-    final Size imageSize = Size(
-      controller.value.previewSize!.height,
-      controller.value.previewSize!.width,
-    );
-    CustomPainter painter = FaceDetectorPainter(imageSize, _scanResults, camDirec);
+
+if(_image==null)
+  {
+    return Text("");
+  }
+
     return CustomPaint(
-      painter: painter,
+      painter: FacePainter(
+          facesList: faces, imageFile: _image!.path),
     );
   }
 
@@ -326,14 +268,14 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
       );
 
       //TODO View for displaying rectangles around detected aces
-      stackChildren.add(
-        Positioned(
-            top: 0.0,
-            left: 0.0,
-            width: size.width,
-            height: size.height,
-            child: buildResult()),
-      );
+      // stackChildren.add(
+      //   Positioned(
+      //       top: 0.0,
+      //       left: 0.0,
+      //       width: size.width,
+      //       height: size.height,
+      //       child: buildResult()),
+      // );
     }
 
     //TODO View for displaying the bar to switch camera direction or for registering faces
@@ -377,8 +319,9 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
                       color: Colors.black,
                       onPressed: () {
                         setState(() {
-                          register = true;
+
                         });
+                        takePicture();
                       },
                     )
                   ],
@@ -402,41 +345,29 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
   }
 }
 
-class FaceDetectorPainter extends CustomPainter {
-  FaceDetectorPainter(this.absoluteImageSize, this.faces, this.camDire2);
-
-  final Size absoluteImageSize;
-  final List<Face> faces;
-  CameraLensDirection camDire2;
+class FacePainter extends CustomPainter {
+  List<Face> facesList;
+  dynamic imageFile;
+  FacePainter({required this.facesList, @required this.imageFile});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double scaleX = size.width / absoluteImageSize.width;
-    final double scaleY = size.height / absoluteImageSize.height;
-    final Paint paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0
-      ..color = Colors.green;
-    for (Face face in faces) {
-      canvas.drawRect(
-        Rect.fromLTRB(
-          camDire2 == CameraLensDirection.front
-              ? (absoluteImageSize.width - face.boundingBox.right) * scaleX
-              : face.boundingBox.left * scaleX,
-          face.boundingBox.top * scaleY,
-          camDire2 == CameraLensDirection.front
-              ? (absoluteImageSize.width - face.boundingBox.left) * scaleX
-              : face.boundingBox.right * scaleX,
-          face.boundingBox.bottom * scaleY,
-        ),
-        paint,
-      );
+    if (imageFile != null) {
+      canvas.drawImage(imageFile, Offset.zero, Paint());
     }
 
+    Paint p = Paint();
+    p.color = Colors.blue;
+    p.style = PaintingStyle.stroke;
+    p.strokeWidth = 3;
+
+    for (Face face in facesList) {
+      canvas.drawRect(face.boundingBox, p);
+    }
   }
 
   @override
-  bool shouldRepaint(FaceDetectorPainter oldDelegate) {
+  bool shouldRepaint(CustomPainter oldDelegate) {
     return true;
   }
 }
