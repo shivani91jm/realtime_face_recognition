@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:convert_native_img_stream/convert_native_img_stream.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -37,7 +38,7 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
   late CameraDescription description = widget.cameras[1];
   CameraLensDirection camDirec = CameraLensDirection.front;
   late List<Recognition> recognitions = [];
-
+  final _convertNativeImgStreamPlugin = ConvertNativeImgStream();
   //TODO declare face detector
   late FaceDetector faceDetector;
 
@@ -45,6 +46,8 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
   late Recognizer recognizer;
   final AudioPlayer _audioPlayer = AudioPlayer();
   static  String flag="1";
+  Uint8List? imageBytes;
+  File? imageFile;
   @override
   void initState() {
     super.initState();
@@ -71,6 +74,21 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
           {
             isBusy=true;
             frame = image;
+            controller?.stopImageStream();
+            controller?.pausePreview();
+            _convertNativeImgStreamPlugin
+                .convertImgToBytes(
+              image.planes.first.bytes,
+              image.width,
+              image.height,
+            )
+                .then((value) {
+              imageBytes = value;
+              isBusy = false;
+              setState(() {
+
+              });
+            });
             doFaceDetectionOnFrame();
 
           }
@@ -171,9 +189,9 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
 
         CustomSnackBar.errorSnackBar("Unknown User", context);
 
-        setState(() {
-          isBusy=false;
-        });
+        // setState(() {
+        //   isBusy=false;
+        // });
       }
       else
         {
@@ -354,7 +372,6 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     }
 
     //TODO View for displaying the bar to switch camera direction or for registering faces
-
     final cameraProvider = Provider.of<CameraProvider>(context);
     final List<Face> faces = cameraProvider.detectedFaces;
     return Scaffold(
@@ -375,7 +392,7 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
         ],
       ),
       backgroundColor: Colors.black,
-      body:  Consumer<CameraProvider>(
+      body: Consumer<CameraProvider>(
         builder: (context, cameraProvider, child) {
           if (cameraProvider.cameraController == null ||
               !cameraProvider.cameraController!.value.isInitialized) {

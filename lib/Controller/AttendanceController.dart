@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:realtime_face_recognition/Activity/DashboardPage.dart';
 import 'package:realtime_face_recognition/Constants/custom_snackbar.dart';
+import 'package:realtime_face_recognition/ML/FaceRecognitionApi.dart';
 import 'package:realtime_face_recognition/Model/StaffList/Data.dart';
 import 'package:realtime_face_recognition/Utils/Urils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,7 +50,14 @@ class AttendanceController extends GetxController {
            if(res['message']=="Attendance recorded successfully")
            {
              CustomSnackBar.successSnackBar("Hey ${name} Attendance Successfully",context!);
-              Navigator.pushReplacement(context!, MaterialPageRoute(builder: (context) => DashBoard()),);
+             var camera=  await availableCameras();
+             Navigator.push(
+               context,
+               MaterialPageRoute(builder: (context) =>  StaffRecognationPage2(cameras: camera,)),
+             );
+
+
+             // Navigator.pushReplacement(context!, MaterialPageRoute(builder: (context) => StaffRecognationPage2()),);
            }
         }
 
@@ -58,8 +67,13 @@ class AttendanceController extends GetxController {
           if(res['message']=="Already exists attendance")
           {
 
-            Navigator.pushReplacement(context!, MaterialPageRoute(builder: (context) => DashBoard()),);
+
             CustomSnackBar.errorSnackBar("Already Punch Out...",context!);
+            var camera=  await availableCameras();
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) =>  StaffRecognationPage2(cameras: camera,)),
+            );
           }
         }
         else {

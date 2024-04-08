@@ -18,9 +18,6 @@ import 'package:realtime_face_recognition/Constants/AppConstants.dart';
 import 'package:realtime_face_recognition/ML/FaceRecognitionApi.dart';
 import 'package:realtime_face_recognition/Utils/AppFontFamily.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-
-
 import 'package:image/image.dart' as img;
 import 'package:http/http.dart' as http;
 

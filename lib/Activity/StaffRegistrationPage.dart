@@ -207,8 +207,6 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
     );
   }
 
-
-
   // TODO Show rectangles around detected faces
   Widget buildResult() {
     if  (controller == null || !controller.value.isInitialized) {

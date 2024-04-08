@@ -5,28 +5,23 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:camera/camera.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_face_api/face_api.dart';
+import 'package:get/get.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
-import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import 'package:realtime_face_recognition/Activity/user_details_view.dart';
-import 'package:realtime_face_recognition/Constants/AppConstants.dart';
-import 'package:realtime_face_recognition/Constants/custom_snackbar.dart';
-import 'package:realtime_face_recognition/Controller/CameraProvider.dart';
-import 'package:realtime_face_recognition/Controller/FaceDetectorWidget.dart';
+import 'package:realtime_face_recognition/Controller/RecognitionController.dart';
+import 'package:realtime_face_recognition/DB/DatabaseHelper.dart';
+import 'package:realtime_face_recognition/ML/CustomePainClass.dart';
 import 'package:realtime_face_recognition/ML/Recognition.dart';
-import 'package:realtime_face_recognition/ML/Recognizer.dart';
+import 'package:realtime_face_recognition/ML/Recognition2.dart';
+
 import 'package:image/image.dart' as img;
 import 'package:realtime_face_recognition/ML/UserData.dart';
-import 'package:realtime_face_recognition/Model/StaffList/Data.dart';
-import 'package:realtime_face_recognition/Model/StaffList/StaffListModel.dart';
-import 'package:realtime_face_recognition/Model/Userattendancemodel.dart';
-import 'package:realtime_face_recognition/Utils/Urils.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
 
 class StaffRecognationPage2 extends StatefulWidget  {
   late List<CameraDescription> cameras;
@@ -34,263 +29,389 @@ class StaffRecognationPage2 extends StatefulWidget  {
   @override
   _StaffRecognationPage2State createState() => _StaffRecognationPage2State();
 }
-
 class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
+  RecognitionController recognitionController = Get.put(
+      RecognitionController());
   dynamic controller;
   bool isBusy = false;
   late Size size;
   late CameraDescription description = widget.cameras[1];
   CameraLensDirection camDirec = CameraLensDirection.front;
   late List<Recognition> recognitions = [];
-
   //TODO declare face detector
   late FaceDetector faceDetector;
-
   //TODO declare face recognizer
-  late Recognizer recognizer;
+  late Recognizer222 recognizer;
   final AudioPlayer _audioPlayer = AudioPlayer();
-  static  String flag="1";
-  List<Data>? users;
+  static String flag = "1";
+
+
   var imgage2;
+  final dbHelper = DatabaseHelper();
+  List<UserData> users = [];
+  bool loading = false;
+  String _similarity = "nil";
+  String _liveness = "nil";
+  var image1 = new MatchFacesImage();
+  var image2 = new MatchFacesImage();
+  bool isMatching = false;
+  File? _image;
+  var image;
+  int trialNumber = 0;
+  get _playFailedAudio => _audioPlayer
+    ..stop()
+    ..setReleaseMode(ReleaseMode.release)
+    ..play(AssetSource("failed.mp3"));
   @override
   void initState() {
+    initPlatformState();
     super.initState();
-
-    //TODO initialize face detector
-    //var options = FaceDetectorOptions();
-  //  faceDetector = FaceDetector(options: options);
+    var options = FaceDetectorOptions();
+    faceDetector = FaceDetector(options: options);
     //TODO initialize face recognizer
-   // recognizer = Recognizer();
+    recognizer = Recognizer222();
     //TODO initialize camera footage
-     initializeCamera();
-    // initCamera(widget.cameras![1]);
+    initializeCamera();
+
+    const EventChannel('flutter_face_api/event/video_encoder_completion')
+        .receiveBroadcastStream()
+        .listen((event) {
+      var completion = VideoEncoderCompletion.fromJson(json.decode(event))!;
+      print("VideoEncoderCompletion:");
+      print("    success:  ${completion.success}");
+      print("    transactionId:  ${completion.transactionId}");
+    });
+    const EventChannel('flutter_face_api/event/onCustomButtonTappedEvent')
+        .receiveBroadcastStream()
+        .listen((event) {
+      print("Pressed button with id: $event");
+    });
+    const EventChannel('flutter_face_api/event/livenessNotification')
+        .receiveBroadcastStream()
+        .listen((event) {
+      var notification = LivenessNotification.fromJson(json.decode(event));
+      print("LivenessProcessStatus: ${notification!.status}");
+    });
   }
+
+  Future<void> initPlatformState() async {
+    var onInitialized = (json) {
+      var response = jsonDecode(json);
+      if (!response["success"]) {
+        print("Init failed: ");
+        print(json);
+      } else {
+        print("Init complete");
+      }
+    };
+    initialize(onInitialized);
+  }
+
 
   //TODO code to initialize the camera feed
   initializeCamera() async {
-    controller = CameraController(widget.cameras[1], ResolutionPreset.high);
-    try {
-      // await controller.initialize().then((_) {
-      //
-      //   // controller.startImageStream((image) async {
-      //   //   if(!isBusy)
-      //   //   {
-      //   //     isBusy=true;
-      //   //     frame = image;
-      //   //     doFaceDetectionOnFrame();
-      //   //
-      //   //   }
-      //   // });
-      //   // setState(() {});
-      //   //   controller?.startImageStream(doFaceDetectionOnFrame()).then((value) {
-      //   //          isBusy=true;
-      //   //           frame = value;
-      //   //   });
-      //   //   setState(() {});
-      // });
-      await controller.initialize().then((_) {
-        if (!mounted) return;
-        setState(() {});
-        takePicture();
-        setState(() {
-          isBusy = true;
-        });
-      });
+    await dbHelper.init();
+    final allRows = await dbHelper.queryAllRows();
+    for (final row in allRows) {
+      //  debugPrint(row.toString());
+      print(row[DatabaseHelper.columnName]);
+      String name = row[DatabaseHelper.columnName];
+      String url = row[DatabaseHelper.columnEmbedding];
+      String id = row[DatabaseHelper.columnStaffId];
+      print(url);
+      image1.bitmap = url;
+      UserData data = UserData(name,"", id, image1.bitmap!);
+      users.add(data);
+    }
 
+    try {
+      controller = CameraController(widget.cameras[1], ResolutionPreset.high);
+      try {
+        await controller.initialize().then((_) {
+          if (!mounted) return;
+          controller.startImageStream((img) async {
+            if(!isBusy)
+            {
+             // doFaceDetection(img,description);
+            }
+          });
+          takePicture();
+        });
+        setState(() {});
+      } on CameraException catch (e) {
+        debugPrint("camera error $e");
+      }
     } on CameraException catch (e) {
       debugPrint("camera error $e");
     }
   }
 
+
+  Uint8List concatenatePlanes(List<Plane> planes) {
+    final WriteBuffer allBytes = WriteBuffer();
+    for (Plane plane in planes) {
+      allBytes.putUint8List(plane.bytes);
+    }
+    return allBytes
+        .done()
+        .buffer
+        .asUint8List();
+  }
+
+  Future<void> initialize(onInit(dynamic response)) async {
+    var licenseData = await loadAssetIfExists("assets/regula.license");
+    if (licenseData != null) {
+      var config = InitializationConfiguration();
+      config.license = base64Encode(licenseData.buffer.asUint8List());
+      FaceSDK.initializeWithConfig(config.toJson()).then(onInit);
+    } else
+      FaceSDK.initialize().then(onInit);
+  }
+
+  Future<ByteData?> loadAssetIfExists(String path) async {
+    try {
+      return await rootBundle.load(path);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future takePicture() async {
-    if (!controller.value.isInitialized) {return null;}
-    if (controller.value.isTakingPicture) {return null;}
+    if (!controller.value.isInitialized) {
+      return null;
+    }
+    if (controller.value.isTakingPicture) {
+      return null;
+    }
     try {
       await controller.setFlashMode(FlashMode.off);
       final XFile? photo = await controller?.takePicture();
-      print("fhdhhfhjf"+photo!.path.toString());
+      XFile picture = await controller.takePicture();
+      setState((){
+        _image = File(picture.path);
+      });
+
+      print("fhdhhfhjf" + photo!.path.toString());
+
+      setImage(
+          true,
+          File(photo!.path).readAsBytesSync(),
+          ImageType.PRINTED);
+
+
       if (photo != null) {
-        setState(() {
-          imgage2 = _convertImageToBase64(photo.path);
-        });
+
       }
-      initDB();
-
-
+     initDB();
     } on CameraException catch (e) {
       debugPrint('Error occured while taking picture: $e');
       return null;
     }
   }
+  List<Face> faces = [];
 
-  String _convertImageToBase64(String imagePath) {
-    final bytes = Uint8List.fromList(File(imagePath).readAsBytesSync());
-    final base64String = base64Encode(bytes);
-    return base64String;
-  }
+
 
   //TODO close all resources
   @override
   void dispose() {
-
     controller?.dispose();
-   // recognitions.clear();
-    //faceDetector.close();
-    // _audioPlayer.dispose();
+
+    faceDetector.close();
+
     super.dispose();
   }
 
-  //TODO face detection on a frame
-  dynamic _scanResults;
-  CameraImage? frame;
-  doFaceDetectionOnFrame() async {
-    try{
-
-
-
-
-    } catch(e){
-      CustomSnackBar.errorSnackBar("Face Detcion Problem Please Refresh",context);
-    }
-    finally{
-      //setState(() => isBusy = false);
-    }
-
-
-  }
   initDB() async {
+    final allRows = await dbHelper.queryAllRows();
+    for (final row in allRows) {
+      //  debugPrint(row.toString());
+      print(row[DatabaseHelper.columnName]);
+      String name = row[DatabaseHelper.columnName];
+      String url = row[DatabaseHelper.columnEmbedding];
+      String id = row[DatabaseHelper.columnStaffId];
+      print(url);
+      // for (int r=0;r< users!.length;r++) {
+      //   //  debugPrint(row.toString());
+      //
+      //   String name = users![r].name;
+      //   String url = users![r].image;
+      //   String id = users![r].id;
+      //   print(url);
+      //
+      // }
 
-    try {
-      final result = await InternetAddress.lookup('google.com');
-      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-        final SharedPreferences prefs = await SharedPreferences.getInstance();
-        var admin_id = await prefs.getString('admin_id') ?? "";
-        var url = Urls.staffListUrl + "admin_id=${admin_id}";
-        print("res body" + url.toString());
-        final response = await http.get(
-          Uri.parse(url), headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',},);
-        print("response" + response.body.toString());
-        if (response.statusCode == 200) {
-          StaffListModel res = StaffListModel.fromJson(
-              jsonDecode(response.body));
-          print("vdbvsbd" + res.toString());
-          if (res != null) {
-            var info = res.success;
 
-            if (info == true) {
-               users  = res.data;
+      // image2.bitmap = url;
+      // UserData data=UserData(name,  "",id,image2.bitmap!);
+      // users.add(data);
 
-            }
-            loadRegisteredFaces();
-          }
-        }
-        else if (response.statusCode == 401) {
-          print("data" + response.body.toString());
 
-          // Navigator.push(context!, MaterialPageRoute(builder: (context) => LoginPage()),);
-        }
-        else if (response.statusCode == 500) {
-          print("data" + response.body.toString());
-        }
-        else {
-          print("data" + response.body.toString());
-        }
-      }
-    }
-    on SocketException catch (_) {
+
+
 
     }
   }
 
-  void loadRegisteredFaces() async {
 
-    for (int i = 0; i < users!.length; i++) {
-      String name = users![i].name.toString();
-      var id = users![i].id.toString();
-      var url = users![i].faceModel;
-      String modifiedUrl = url.replaceFirst(
-          '\/home\/hqcj8lltjqyi\/public_html\/', '');
-      print(modifiedUrl);
-      fetchImageAndConvertToBase64(modifiedUrl, imgage2, name, id);
-    }
-  }
 
-  void fetchImageAndConvertToBase64(String imageUrl, String image2, String name, String id) async {
-    //   String imageUrl = 'https://websitedemoonline.com/facerecognition/uploads/65e9647a1180f.png';
 
-    // Fetch the image
-    http.Response response = await http.get(Uri.parse("https://"+imageUrl));
-    Uri uri = Uri.parse(imageUrl);
-    if (response.statusCode == 200) {
-      // Convert the image bytes to Base64
-      String image1 = base64Encode(response.bodyBytes);
-      print('Base64 encoded image: $image1');
-
-      var  body=jsonEncode(<String, String>{
-        'image1': image1,
-        'image2': image2,
-
+  setImage(bool first, Uint8List imageFile, int type,) {
+    setState(() => _similarity = "nil");
+    if (first) {
+      image2.bitmap = base64Encode(imageFile);
+      image2.imageType = type;
+      setState(() {
+        //  img1 = Image.memory(imageFile);
+        _liveness = "nil";
       });
-      var url = Urls.faceurl;
-      print("res body" + url.toString());
-      final responsess = await http.post(
-          Uri.parse(url), headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'X-RapidAPI-Key':Urls.rapid_key,
-        'X-RapidAPI-Host': Urls.rapid_host
-      },body: body);
-      print("response" + responsess.body.toString());
-      if (response.statusCode == 200) {
-        print("vdbvsbd" );
-       // var res = jsonDecode(response.body);
-        var res = json.decode(responsess.body);
-        print("vdbvsbd" + res.toString());
-        if (res != null) {
-          var info = res['data']['result'];
-          print("ghfdhfd"+info.toString());
-
-          if (info!="different") {
-            UserData user = UserData(name, "", id);
+      matchFaces();
+    }
+  }
+  doFaceDetection(CameraImage frame,CameraDescription description) async {
+    if (controller == null || !controller!.value.isInitialized) {
+      // Controller is not initialized, do nothing
+      return;
+    }
+    InputImage? inputImage = recognizer.getInputImage(frame,description);
+    //TODO pass InputImage to face detection model and detect faces
+     faces = await faceDetector.processImage(inputImage!);
+     if (faces.isEmpty) {
+        takePicture();
+     }
 
 
-            if (mounted) {
+    //TODO call the method to perform face recognition on detected faces
+  }
+  matchFaces() {
+    bool faceMatched=false;
+    if (image1.bitmap == null || image1.bitmap == "" || image2.bitmap == null || image2.bitmap == "") return;
+    for (UserData user in users) {
+      image1.bitmap = user.targetimage;
+      image1.imageType = ImageType.PRINTED;
+
+      //Face comparing logic.
+
+
+      var request = new MatchFacesRequest();
+      request.images = [image1, image2];
+      FaceSDK.matchFaces(jsonEncode(request)).then((value) {
+        var response = MatchFacesResponse.fromJson(json.decode(value));
+        FaceSDK.matchFacesSimilarityThresholdSplit(
+            jsonEncode(response!.results), 0.75)
+            .then((str) {
+          var split = MatchFacesSimilarityThresholdSplit.fromJson(
+              json.decode(str));
+
+          setState(() {
+            _similarity = split!.matchedFaces.isNotEmpty
+                ? (split.matchedFaces[0]!.similarity! * 100).toStringAsFixed(2)
+                : "error";
+            log("similarity: $_similarity");
+
+            if (_similarity != "error" && double.parse(_similarity) > 90.00) {
+              print("hghg" + user.name);
+              faceMatched = true;
+              setState(() {
+                trialNumber = 1;
+                //isMatching = false;
+              });
+
               _audioPlayer
                 ..stop()
                 ..setReleaseMode(ReleaseMode.release)
                 ..play(AssetSource("sucessAttendance.m4r"));
-              Navigator.pushReplacement(context, MaterialPageRoute(
+              UserData data = UserData(
+                  user.name, image1.bitmap!, user.id, image2.bitmap!);
+              Navigator.pushReplacement(context!, MaterialPageRoute(
                   builder: (context) =>
-                      UserDetailsView(user: user,)),
-              );
+                      UserDetailsView(user: data,)));
+            } else {
+              faceMatched = false;
+              print("no image found");
             }
+          });
 
-          }
-          else
-            {
-              CustomSnackBar.successSnackBar("No User Found", context);
-            }
 
-        }
+        });
+      });
+    }
+    if (!faceMatched) {
+      if (trialNumber == 4) {
+        setState(() => trialNumber = 1);
+        // _showFailureDialog(
+        //   title: "Redeem Failed",
+        //   description: "Face doesn't match. Please try again.",
+        // );
       }
-      else if (response.statusCode == 401) {
-        print("data" + response.body.toString());
-
-        // Navigator.push(context!, MaterialPageRoute(builder: (context) => LoginPage()),);
-      }
-      else if (response.statusCode == 500) {
-        print("data" + response.body.toString());
+      else if (trialNumber == 3) {
+        //After 2 trials if the face doesn't match automatically, the registered name prompt
+        //will be shown. After entering the name the face registered with the entered name will
+        //be fetched and will try to match it with the to be authenticated face.
+        //If the faces match, Viola!. Else it means the user is not registered yet.
+        _audioPlayer.stop();
+        setState(() {
+          isMatching = false;
+          trialNumber++;
+        });
+        // showDialog(
+        //     context: context,
+        //     builder: (context) {
+        //       return AlertDialog(
+        //         title: const Text("Enter Name"),
+        //         content: TextFormField(
+        //           controller: _nameController,
+        //           cursorColor: accentColor,
+        //           decoration: InputDecoration(
+        //             enabledBorder: OutlineInputBorder(
+        //               borderSide: const BorderSide(
+        //                 width: 2,
+        //                 color: accentColor,
+        //               ),
+        //               borderRadius: BorderRadius.circular(4),
+        //             ),
+        //             focusedBorder: OutlineInputBorder(
+        //               borderSide: const BorderSide(
+        //                 width: 2,
+        //                 color: accentColor,
+        //               ),
+        //               borderRadius: BorderRadius.circular(4),
+        //             ),
+        //           ),
+        //         ),
+        //         actions: [
+        //           TextButton(
+        //             onPressed: () {
+        //               if (_nameController.text.trim().isEmpty) {
+        //                 CustomSnackBar.errorSnackBar("Enter a name to proceed");
+        //               } else {
+        //                 Navigator.of(context).pop();
+        //                 setState(() => isMatching = true);
+        //                 _playScanningAudio;
+        //                 _fetchUserByName(_nameController.text.trim());
+        //               }
+        //             },
+        //             child: const Text(
+        //               "Done",
+        //               style: TextStyle(
+        //                 color: accentColor,
+        //               ),
+        //             ),
+        //           )
+        //         ],
+        //       );
+        //     });
       }
       else {
-        print("data" + response.body.toString());
+        setState(() => trialNumber++);
+        _showFailureDialog(
+          title: "Redeem Failed",
+          description: "Face doesn't match. Please try again.",
+        );
       }
-    } else {
-      print('Failed to fetch image: ${response.statusCode}');
     }
+
   }
-
-
-
 
   //TODO toggle camera direction
   void _toggleCameraDirection() async {
@@ -306,50 +427,53 @@ class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
     initializeCamera();
     setState(() {
       // controller;
-      isBusy  = false;
+      isBusy = false;
     });
   }
 
+  _showFailureDialog({
+    required String title,
+    required String description,
+  }) {
+    _playFailedAudio;
+    setState(() => isMatching = false);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(description),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                "Ok",
+                style: TextStyle(
+                  color: Colors.blue,
+                ),
+              ),
+            )
+          ],
+        );
+      },
+    );
+
+
+
+  }
+
+
+
+
   @override
   Widget build(BuildContext context) {
+    if(controller==null) {
+      return Center(child: CircularProgressIndicator(color: Colors.blue,),);
 
-    List<Widget> stackChildren = [];
-    size = MediaQuery.of(context).size;
-    if (controller != null) {
-
-      //TODO View for displaying the live camera footage
-      stackChildren.add(
-        Positioned(
-          top: 0.0,
-          left: 0.0,
-          width: size.width,
-          height: size.height,
-          child: Container(
-            child: (controller.value.isInitialized)
-                ? AspectRatio(
-              aspectRatio: controller.value.aspectRatio,
-              child: CameraPreview(controller),
-            )
-                : Container(),
-          ),
-        ),
-      );
-
-      //TODO View for displaying rectangles around detected aces
-      // stackChildren.add(
-      //   Positioned(
-      //       top: 0.0,
-      //       left: 0.0,
-      //       width: size.width,
-      //       height: size.height,
-      //       child: buildResult()),
-      // );
     }
 
-    //TODO View for displaying the bar to switch camera direction or for registering faces
-
-    final cameraProvider = Provider.of<CameraProvider>(context);
-    final List<Face> faces = cameraProvider.detectedFaces;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
@@ -368,50 +492,35 @@ class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
         ],
       ),
       backgroundColor: Colors.black,
-      body:  Stack(
-          fit: StackFit.expand,
-          children: [
-            (controller.value.isInitialized)
-                ? CameraPreview(controller)
-                : Container(
-                color: Colors.black,
-                child: const Center(child: CircularProgressIndicator()))
-          ]
-      )
+      body: Container(
+          margin: const EdgeInsets.only(top: 0),
+          color: Colors.black,
+          child:Stack(
+            children: <Widget>[
+              CameraPreview(controller),
+              CustomPaint(
+                size: MediaQuery.of(context).size,
+                painter: FacePainter(), // Assuming you have a FacePainter class
+              ),
+            ],
+          ),
+      ),
     );
   }
-}
-
-class FaceDetectorPainter extends CustomPainter {
-  FaceDetectorPainter(this.faces);
-
-  //final Size absoluteImageSize;
-  final List<Face> faces;
-//  CameraLensDirection camDire2;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // final double scaleX = size.width / absoluteImageSize.width;
-    // final double scaleY = size.height / absoluteImageSize.height;
 
 
-    final Paint paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..color = Colors.red;
-
-    for (var face in faces) {
-      final Rect rect = Rect.fromPoints(
-        Offset(face.boundingBox.left, face.boundingBox.top),
-        Offset(face.boundingBox.right, face.boundingBox.bottom),
-      );
-      canvas.drawRect(rect, paint);
-    }
-
+  removeRotation(File inputImage) async {
+    final img.Image? capturedImage = img.decodeImage(await File(inputImage!.path).readAsBytes());
+    final img.Image orientedImage = img.bakeOrientation(capturedImage!);
+    return await File(_image!.path).writeAsBytes(img.encodeJpg(orientedImage));
   }
 
-  @override
-  bool shouldRepaint(FaceDetectorPainter oldDelegate) {
-    return true;
-  }
+
+
+
 }
+
+
+
+
+
