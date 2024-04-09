@@ -18,7 +18,7 @@ class AttendanceController extends GetxController {
   RxList<Data> userList=<Data>[].obs;
   BuildContext? context=Get.context;
 
-  void attendanceController(String staff_id,BuildContext context,String name) async {
+  void attendanceController(String staff_id,BuildContext context,String name,BuildContext? contextsss) async {
     try {
       final result = await InternetAddress.lookup('google.com');
       if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
@@ -51,10 +51,7 @@ class AttendanceController extends GetxController {
            {
              CustomSnackBar.successSnackBar("Hey ${name} Attendance Successfully",context!);
              var camera=  await availableCameras();
-             Navigator.push(
-               context,
-               MaterialPageRoute(builder: (context) =>  StaffRecognationPage2(cameras: camera,)),
-             );
+             Navigator.of(context).pop();
 
 
              // Navigator.pushReplacement(context!, MaterialPageRoute(builder: (context) => StaffRecognationPage2()),);
@@ -70,10 +67,11 @@ class AttendanceController extends GetxController {
 
             CustomSnackBar.errorSnackBar("Already Punch Out...",context!);
             var camera=  await availableCameras();
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) =>  StaffRecognationPage2(cameras: camera,)),
-            );
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(builder: (context) =>  StaffRecognationPage2(cameras: camera,)),
+            // );
+            Navigator.of(context).pop();
           }
         }
         else {

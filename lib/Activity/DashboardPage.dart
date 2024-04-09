@@ -44,12 +44,12 @@ class _DashBoardState extends State<DashBoard> {
               label: 'Settings',
             ),
           ],
-          selectedItemColor: Colors.blue, // Change the color of the selected icon
+          selectedItemColor: Colors.blue,
         ),
       ),
     );
   }
 
-  //-----------bottom navigation ------------
+
 
 }

@@ -15,11 +15,14 @@ import 'package:realtime_face_recognition/Controller/BottomNavigationProvider.da
 import 'package:realtime_face_recognition/Controller/CameraProvider.dart';
 import 'package:realtime_face_recognition/Controller/ShowAttendaceDailyListController.dart';
 import 'package:realtime_face_recognition/Controller/ShowStaffListProvider.dart';
+import 'package:realtime_face_recognition/ML/Recognition2.dart';
 
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+
   runApp(MyApp());
 }
 

@@ -12,6 +12,7 @@ import 'package:image/image.dart' as img;
 import 'package:realtime_face_recognition/Controller/AttendanceController.dart';
 import 'package:realtime_face_recognition/DB/FirebaseService.dart';
 import 'package:realtime_face_recognition/ML/FaceRecognitionApi.dart';
+import 'package:realtime_face_recognition/ML/UserData.dart';
 import 'package:realtime_face_recognition/Model/StaffList/Data.dart';
 import 'package:realtime_face_recognition/Model/StaffList/StaffListModel.dart';
 import 'package:realtime_face_recognition/Model/usermodel.dart';
@@ -35,11 +36,13 @@ class Recognizer222 {
   @override
   String get modelName => 'assets/mobile_face_net.tflite';
   final FirebaseService firebaseService = FirebaseService();
-  List<Data>? users;
+  List<UserData> users=[];
   List<double>? predictedArray;
 
   Recognizer222({int? numThreads}) {
-    initDB();
+   initDB();
+    fetchstaffList();
+
   }
   initDB() async {
     await dbHelper.init();
@@ -145,6 +148,7 @@ class Recognizer222 {
     on SocketException catch (_) {
 
     }
+  //  fetchstaffList();
   }
   //TODO convert CameraImage to InputImage
   InputImage getInputImage(CameraImage frame,CameraDescription description) {
@@ -182,6 +186,24 @@ class Recognizer222 {
     final inputImage = InputImage.fromBytes(bytes: bytes, inputImageData: inputImageData);
 
     return inputImage;
+  }
+  fetchstaffList() async{
+    await dbHelper.init();
+    final allRows = await dbHelper.queryAllRows();
+    if(allRows.isNotEmpty) {
+      for (final row in allRows) {
+        //  debugPrint(row.toString());
+        print(row[DatabaseHelper.columnName]);
+        String name = row[DatabaseHelper.columnName];
+        String url = row[DatabaseHelper.columnEmbedding];
+        String id = row[DatabaseHelper.columnStaffId];
+        print(url);
+
+        UserData data = UserData(name, "", id, url);
+        users.add(data);
+
+      }
+    }
   }
 
 }

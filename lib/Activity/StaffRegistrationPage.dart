@@ -64,7 +64,7 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
         }
         setState(() {});
         controller.startImageStream((image) async {
-          if(!isBusy)
+          if(isBusy==false)
           {
             isBusy=true;
           }
