@@ -51,10 +51,7 @@ class AttendanceController extends GetxController {
            {
              CustomSnackBar.successSnackBar("Hey ${name} Attendance Successfully",context!);
              var camera=  await availableCameras();
-             Navigator.of(context).pop();
-
-
-             // Navigator.pushReplacement(context!, MaterialPageRoute(builder: (context) => StaffRecognationPage2()),);
+             Navigator.pushReplacement(context!, MaterialPageRoute(builder: (context) => StaffRecognationPage2(cameras: camera,)),);
            }
         }
 
@@ -67,11 +64,11 @@ class AttendanceController extends GetxController {
 
             CustomSnackBar.errorSnackBar("Already Punch Out...",context!);
             var camera=  await availableCameras();
-            // Navigator.push(
-            //   context,
-            //   MaterialPageRoute(builder: (context) =>  StaffRecognationPage2(cameras: camera,)),
-            // );
-            Navigator.of(context).pop();
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) =>  StaffRecognationPage2(cameras: camera,)),
+            );
+
           }
         }
         else {

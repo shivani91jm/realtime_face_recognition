@@ -4,6 +4,7 @@ import 'package:realtime_face_recognition/Activity/AttendanceListDateWisePage.da
 import 'package:realtime_face_recognition/Activity/SettingPage.dart';
 import 'package:realtime_face_recognition/Activity/ShowStaffListPage.dart';
 import 'package:realtime_face_recognition/Controller/BottomNavigationProvider.dart';
+import 'package:realtime_face_recognition/ML/Recognition2.dart';
 import 'package:realtime_face_recognition/Widgetsss/PageWidget.dart';
 class DashBoard extends StatefulWidget {
   const DashBoard({super.key});
@@ -13,11 +14,18 @@ class DashBoard extends StatefulWidget {
 }
 
 class _DashBoardState extends State<DashBoard> {
+ late Recognizer222 recognizer222;
   final List<Widget> _pages = [
     ShowStaffListPage(),
     AttendencePageClass(),
     SettingPage(),
   ];
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    recognizer222=Recognizer222();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(

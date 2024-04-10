@@ -41,7 +41,7 @@ class Recognizer222 {
 
   Recognizer222({int? numThreads}) {
    initDB();
-    fetchstaffList();
+
 
   }
   initDB() async {
@@ -94,6 +94,7 @@ class Recognizer222 {
 
 
                 }
+                fetchstaffList();
               }
 
             else
@@ -123,6 +124,7 @@ class Recognizer222 {
                         print('Failed to fetch image: ${response.statusCode}');
                       }
                     }
+                    fetchstaffList();
                   }
                 else
                   {
@@ -148,7 +150,7 @@ class Recognizer222 {
     on SocketException catch (_) {
 
     }
-  //  fetchstaffList();
+      fetchstaffList();
   }
   //TODO convert CameraImage to InputImage
   InputImage getInputImage(CameraImage frame,CameraDescription description) {
