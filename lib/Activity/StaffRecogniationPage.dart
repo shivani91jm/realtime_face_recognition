@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:camera/camera.dart';
@@ -9,17 +11,24 @@ import 'package:convert_native_img_stream/convert_native_img_stream.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_face_api/face_api.dart';
+import 'package:get/get.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:realtime_face_recognition/Activity/user_details_view.dart';
 import 'package:realtime_face_recognition/Constants/AppConstants.dart';
 import 'package:realtime_face_recognition/Constants/custom_snackbar.dart';
 import 'package:realtime_face_recognition/Controller/CameraProvider.dart';
 import 'package:realtime_face_recognition/Controller/FaceDetectorWidget.dart';
+import 'package:realtime_face_recognition/ML/CustomePainClass.dart';
 import 'package:realtime_face_recognition/ML/Recognition.dart';
+import 'package:realtime_face_recognition/ML/Recognition2.dart';
 import 'package:realtime_face_recognition/ML/Recognizer.dart';
 import 'package:image/image.dart' as img;
+import 'package:realtime_face_recognition/ML/UserData.dart';
 import 'package:realtime_face_recognition/Model/Userattendancemodel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -48,6 +57,12 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
   static  String flag="1";
   Uint8List? imageBytes;
   File? imageFile;
+  late Recognizer222 recognizer222;
+  String _similarity = "nil";
+  String _liveness = "nil";
+  var image1 = new MatchFacesImage();
+  var image2 = new MatchFacesImage();
+  BuildContext? contextss= Get.context;
   @override
   void initState() {
     super.initState();
@@ -57,9 +72,28 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     faceDetector = FaceDetector(options: options);
     //TODO initialize face recognizer
     recognizer = Recognizer();
+    recognizer222 = Recognizer222();
     //TODO initialize camera footage
-   // initializeCamera(widget.cameras[1]);
-    // initCamera(widget.cameras![1]);
+   initializeCamera(widget.cameras[1]);
+    const EventChannel('flutter_face_api/event/video_encoder_completion')
+        .receiveBroadcastStream()
+        .listen((event) {
+      var completion = VideoEncoderCompletion.fromJson(json.decode(event))!;
+      print("VideoEncoderCompletion:");
+      print("    success:  ${completion.success}");
+      print("    transactionId:  ${completion.transactionId}");
+    });
+    const EventChannel('flutter_face_api/event/onCustomButtonTappedEvent')
+        .receiveBroadcastStream()
+        .listen((event) {
+      print("Pressed button with id: $event");
+    });
+    const EventChannel('flutter_face_api/event/livenessNotification')
+        .receiveBroadcastStream()
+        .listen((event) {
+      var notification = LivenessNotification.fromJson(json.decode(event));
+      print("LivenessProcessStatus: ${notification!.status}");
+    });
   }
 
   //TODO code to initialize the camera feed
@@ -68,38 +102,17 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     try {
       await controller.initialize().then((_) {
         if (!mounted) return;
-
+        setState(() {});
         controller.startImageStream((image) async {
           if(!isBusy)
           {
             isBusy=true;
             frame = image;
-            controller?.stopImageStream();
-            controller?.pausePreview();
-            _convertNativeImgStreamPlugin
-                .convertImgToBytes(
-              image.planes.first.bytes,
-              image.width,
-              image.height,
-            )
-                .then((value) {
-              imageBytes = value;
-              isBusy = false;
-              setState(() {
+            doFaceDetectionOnFrame(contextss!);
 
-              });
-            });
-            doFaceDetectionOnFrame();
+          }});
+      });
 
-          }
-        });
-       setState(() {});
-      //   controller?.startImageStream(doFaceDetectionOnFrame()).then((value) {
-      //          isBusy=true;
-      //           frame = value;
-      //   });
-      //   setState(() {});
-       });
     } on CameraException catch (e) {
       debugPrint("camera error $e");
     }
@@ -112,38 +125,46 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     controller?.dispose();
     recognitions.clear();
     faceDetector.close();
-    // _audioPlayer.dispose();
+     _audioPlayer.dispose();
     super.dispose();
   }
 
   //TODO face detection on a frame
   dynamic _scanResults;
   CameraImage? frame;
-  doFaceDetectionOnFrame() async {
+  doFaceDetectionOnFrame(BuildContext context) async {
     try{
       recognitions.clear();
-      // image = convertYUV420ToImage(frame!);
-      // image = img.copyRotate(image!, angle: camDirec == CameraLensDirection.front ? 270 : 90);
+
       //TODO convert frame into InputImage format
-      InputImage? inputImage = getInputImage();
+      InputImage? inputImage = recognizer222.getInputImage(frame!,description);
+      Uint8List? imageBytes = await inputImage!.bytes;
+      File imageFile = await createTemporaryFile();
+      var bbb= await imageFile.writeAsBytes(imageBytes!);
+      image2.bitmap=base64Encode(bbb.readAsBytesSync());
+      image2.imageType=ImageType.PRINTED;
       //TODO pass InputImage to face detection model and detect faces
       List<Face> faces = await faceDetector.processImage(inputImage!);
       //TODO perform face recognition on detected faces
-      setState(() {
+      // setState(() {
             _scanResults = faces;
-            isBusy = false;
-          });
-          performFaceRecognition(faces);
+         //   isBusy = false;
+         // });
+          performFaceRecognition(faces,context);
     } catch(e){
       CustomSnackBar.errorSnackBar("Face Detcion Problem Please Refresh",context);
     }
     finally{
-      //setState(() => isBusy = false);
+     // setState(() => isBusy = false);
     }
 
 
   }
-
+  Future<File> createTemporaryFile() async {
+    final tempDir = await getTemporaryDirectory();
+    final tempFile = File('${tempDir.path}/my_image.png');
+    return tempFile;
+  }
   double calculateBrightness(CameraImage image) {
     double sum = 0;
     for (int y = 0; y < image.height; y++) {
@@ -159,63 +180,171 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
   img.Image? image;
   bool register = false;
   // TODO perform Face Recognition
-  performFaceRecognition(List<Face> faces) async {
+  performFaceRecognition(List<Face> faces,BuildContext context) async {
 
     //TODO convert CameraImage to Image and rotate it so that our frame will be in a portrait
     image = convertYUV420ToImage(frame!);
     image =img.copyRotate(image!, angle: camDirec == CameraLensDirection.front?270:90);
 
     for (Face face in faces) {
-      Rect faceRect = face.boundingBox;
-      num left = faceRect.left<0?0:faceRect.left;
-      num top = faceRect.top<0?0:faceRect.top;
-      num right = faceRect.right>image!.width?image!.width-1:faceRect.right;
-      num bottom = faceRect.bottom>image!.height?image!.height-1:faceRect.bottom;
-      num width = right - left;
-      num height = bottom - top;
-      img.Image croppedFace = img.copyCrop(image!,x:left.toInt(),y:top.toInt(),width:width.toInt(),height:height.toInt());
+      // var faceRect = face!.boundingBox;
+      //
+      // // Calculate the width and height of the bounding box
+      // int? width = (faceRect.right! - faceRect.left!).toInt();
+      // int height = (faceRect.bottom! - faceRect.top!).toInt();
+      //
+      // // Get the left and top coordinates of the bounding box
+      // int left = faceRect.left!.toInt();
+      // int top = faceRect.top!.toInt();
+      //
+      // // Crop the face directly from the image
+      // img.Image croppedFace = img.copyCrop(image!, x: left, y: top, width: width, height: height);
+      //
+
 
       //TODO pass cropped face to face recognition model
-      Recognition recognition = recognizer.recognize(croppedFace!, faceRect);
-      if(recognition.distance>0.9){
+      Recognition recognition = recognizer.recognize(image!,  face.boundingBox);
+      if(recognition.distance>1.2){
         recognition.name = "Unknown";
       }
 
       recognitions.add(recognition);
 
-
-      if(recognition.distance==-5)
+      if(recognition.name!="Unknown")
       {
+        var ur="https://"+recognition.imageUrl;
+        File userss=await recognizer.urlToFile(ur);
+        image1.bitmap = base64Encode(File(userss!.path).readAsBytesSync() );
+        image1.imageType =  ImageType.PRINTED;
+        var request = new MatchFacesRequest();
+        request.images = [image1, image2];
+        print("hjdsfjk"+request.images.toString());
+        FaceSDK.matchFaces(jsonEncode(request)).then((value) {
+          var response = MatchFacesResponse.fromJson(json.decode(value));
+          print("object+"+response.toString());
+          FaceSDK.matchFacesSimilarityThresholdSplit(
+              jsonEncode(response!.results), 0.75)
+              .then((str) {
+            var split = MatchFacesSimilarityThresholdSplit.fromJson(
+                json.decode(str));
 
-        CustomSnackBar.errorSnackBar("Unknown User", context);
+            setState(() {
+              _similarity = split!.matchedFaces.isNotEmpty
+                  ? (split.matchedFaces[0]!.similarity! * 100).toStringAsFixed(2)
+                  : "error";
+              log("similarity: $_similarity");
 
-        // setState(() {
-        //   isBusy=false;
-        // });
+              if (_similarity != "error" && double.parse(_similarity) > 90.00) {
+                //print("hghg" + user.name);
+                // faceMatched = true;
+                //  setState(() {
+                //    trialNumber = 1;
+                //    //isMatching = false;
+                //  });
+
+                _audioPlayer
+                  ..stop()
+                  ..setReleaseMode(ReleaseMode.release)
+                  ..play(AssetSource("sucessAttendance.m4r"));
+                // UserData data = UserData(
+                //     user.name, image1.bitmap!, user.id, image2.bitmap!);
+
+                Navigator.pushReplacement(context!, MaterialPageRoute(builder: (context) =>  UserDetailsView(user: recognition,)),);
+
+              } else {
+                //  faceMatched = false;
+                print("no image found");
+              }
+            });
+          });
+        });
+
+
+
+        // await Future.wait(recognitions!.map((user) async {
+        //         File userss=await recognizer.urlToFile(user.imageUrl);
+        //   image1.bitmap = base64Encode(File(userss!.path).readAsBytesSync() );
+        //   image1.imageType =  ImageType.PRINTED;
+        //
+        //   var request = new MatchFacesRequest();
+        //   request.images = [image1, image2];
+        //   FaceSDK.matchFaces(jsonEncode(request)).then((value) {
+        //     var response = MatchFacesResponse.fromJson(json.decode(value));
+        //     FaceSDK.matchFacesSimilarityThresholdSplit(
+        //         jsonEncode(response!.results), 0.75)
+        //         .then((str) {
+        //       var split = MatchFacesSimilarityThresholdSplit.fromJson(
+        //           json.decode(str));
+        //
+        //       setState(() {
+        //         _similarity = split!.matchedFaces.isNotEmpty
+        //             ? (split.matchedFaces[0]!.similarity! * 100).toStringAsFixed(2)
+        //             : "error";
+        //         log("similarity: $_similarity");
+        //
+        //         if (_similarity != "error" && double.parse(_similarity) > 90.00) {
+        //           //print("hghg" + user.name);
+        //           // faceMatched = true;
+        //           //  setState(() {
+        //           //    trialNumber = 1;
+        //           //    //isMatching = false;
+        //           //  });
+        //
+        //           _audioPlayer
+        //             ..stop()
+        //             ..setReleaseMode(ReleaseMode.release)
+        //             ..play(AssetSource("sucessAttendance.m4r"));
+        //           UserData data = UserData(
+        //               user.name, image1.bitmap!, user.id, image2.bitmap!);
+        //
+        //           Navigator.pushReplacement(context!, MaterialPageRoute(builder: (context) =>  UserDetailsView(user: recognition,)),);
+        //
+        //         } else {
+        //           //  faceMatched = false;
+        //           print("no image found");
+        //         }
+        //       });
+        //     });
+        //   });
+        // }));
       }
-      else
-        {
-         if(recognition.name!="Unknown")
-           {
-             // if (mounted) {
-             //   _audioPlayer
-             //     ..stop()
-             //     ..setReleaseMode(ReleaseMode.release)
-             //     ..play(AssetSource("sucessAttendance.m4r"));
-             //   Navigator.pushReplacement(context, MaterialPageRoute(
-             //       builder: (context) =>
-             //           UserDetailsView(user: ,)),
-             //   );
-             //   final prefs = await SharedPreferences.getInstance();
-             //   await prefs.setString('page', '1');
-             // }
-           }
-        }
 
-
+      setState(() {
+        isBusy=false;
+      });
     }
 
   }
+  Future<void> initPlatformState() async {
+    var onInitialized = (json) {
+      var response = jsonDecode(json);
+      if (!response["success"]) {
+        print("Init failed: ");
+        print(json);
+      } else {
+        print("Init complete");
+      }
+    };
+    initialize(onInitialized);
+  }
+  Future<void> initialize(onInit(dynamic response)) async {
+    var licenseData = await loadAssetIfExists("assets/regula.license");
+    if (licenseData != null) {
+      var config = InitializationConfiguration();
+      config.license = base64Encode(licenseData.buffer.asUint8List());
+      FaceSDK.initializeWithConfig(config.toJson()).then(onInit);
+    } else
+      FaceSDK.initialize().then(onInit);
+  }
+
+  Future<ByteData?> loadAssetIfExists(String path) async {
+    try {
+      return await rootBundle.load(path);
+    } catch (_) {
+      return null;
+    }
+  }
+
   // TODO method to convert CameraImage to Image
   img.Image convertYUV420ToImage(CameraImage cameraImage) {
     final width = cameraImage.width;
@@ -259,63 +388,26 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     DeviceOrientation.landscapeRight: 270,
   };
 
-  //TODO convert CameraImage to InputImage
-  InputImage getInputImage() {
-    final WriteBuffer allBytes = WriteBuffer();
-    for (final Plane plane in frame!.planes) {
-      allBytes.putUint8List(plane.bytes);
-    }
-    final bytes = allBytes.done().buffer.asUint8List();
-    final Size imageSize = Size(frame!.width.toDouble(), frame!.height.toDouble());
-    final camera = description;
-    final imageRotation =
-    InputImageRotationValue.fromRawValue(camera.sensorOrientation);
-    // if (imageRotation == null) return;
 
-    final inputImageFormat = InputImageFormatValue.fromRawValue(frame!.format.raw);
-    // if (inputImageFormat == null) return null;
-
-    final planeData = frame!.planes.map(
-          (Plane plane) {
-        return InputImagePlaneMetadata(
-          bytesPerRow: plane.bytesPerRow,
-          height: plane.height,
-          width: plane.width,
-        );
-      },
-    ).toList();
-
-    final inputImageData = InputImageData(
-      size: imageSize,
-      imageRotation: imageRotation!,
-      inputImageFormat: inputImageFormat!,
-      planeData: planeData,
-    );
-
-    final inputImage = InputImage.fromBytes(bytes: bytes, inputImageData: inputImageData);
-
-    return inputImage;
-  }
 
   // TODO Show rectangles around detected faces
-  // Widget buildResult() {
-  //   if (controller == null ||
-  //       !controller.value.isInitialized) {
-  //     return const  Center(child: CircularProgressIndicator());
-  //   }
-  //   if(_scanResults==null)
-  //   {
-  //     return const Center(child: Text(""));
-  //   }
-  //   final Size imageSize = Size(
-  //     controller.value.previewSize!.height,
-  //     controller.value.previewSize!.width,
-  //   );
-  //   CustomPainter painter = FaceDetectorPainter(imageSize, _scanResults, camDirec);
-  //   return CustomPaint(
-  //     painter: painter,
-  //   );
-  // }
+  Widget buildResult() {
+    if (controller == null) {
+      return const  Center(child: CircularProgressIndicator());
+    }
+    if(_scanResults==null)
+    {
+      return const Center(child: Text(""));
+    }
+    // final Size imageSize = Size(
+    //   controller.value.previewSize!.height,
+    //   controller.value.previewSize!.width,
+    // );
+    CustomPainter painter = FaceDetectorPainter( _scanResults, MediaQuery.of(contextss!).size);
+    return CustomPaint(
+      painter: painter,
+    );
+  }
 
   //TODO toggle camera direction
   void _toggleCameraDirection() async {
@@ -326,11 +418,11 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     //   camDirec = CameraLensDirection.back;
     //   description = widget.cameras[0];
     // }
-    // await controller.stopImageStream();
+  //   await controller.stopImageStream();
 
     initializeCamera(widget.cameras[1]);
     setState(() {
-      // controller;
+
       isBusy  = false;
     });
   }
@@ -339,7 +431,7 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
   Widget build(BuildContext context) {
 
     List<Widget> stackChildren = [];
-    size = MediaQuery.of(context).size;
+  //  size = MediaQuery.of(context).size;
     if (controller != null) {
 
       //TODO View for displaying the live camera footage
@@ -347,8 +439,8 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
         Positioned(
           top: 0.0,
           left: 0.0,
-          width: size.width,
-          height: size.height,
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height,
           child: Container(
             child: (controller.value.isInitialized)
                 ? AspectRatio(
@@ -361,14 +453,14 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
       );
 
       //TODO View for displaying rectangles around detected aces
-      // stackChildren.add(
-      //   Positioned(
-      //       top: 0.0,
-      //       left: 0.0,
-      //       width: size.width,
-      //       height: size.height,
-      //       child: buildResult()),
-      // );
+      stackChildren.add(
+        Positioned(
+            top: 0.0,
+            left: 0.0,
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            child: buildResult()),
+      );
     }
 
     //TODO View for displaying the bar to switch camera direction or for registering faces
@@ -392,58 +484,16 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
         ],
       ),
       backgroundColor: Colors.black,
-      body: Consumer<CameraProvider>(
-        builder: (context, cameraProvider, child) {
-          if (cameraProvider.cameraController == null ||
-              !cameraProvider.cameraController!.value.isInitialized) {
-            return Center(child: CircularProgressIndicator());
-          }
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              CameraPreview(cameraProvider.cameraController!),
-              FaceDetectorWidget(),
-            ],
-          );
-        },
+      body: Container(
+        child: Stack(
+          children: stackChildren,
+        ),
       ),
     );
   }
 }
 
-class FaceDetectorPainter extends CustomPainter {
-  FaceDetectorPainter(this.faces);
 
-  //final Size absoluteImageSize;
- final List<Face> faces;
-//  CameraLensDirection camDire2;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // final double scaleX = size.width / absoluteImageSize.width;
-    // final double scaleY = size.height / absoluteImageSize.height;
-
-
-    final Paint paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..color = Colors.red;
-
-    for (var face in faces) {
-      final Rect rect = Rect.fromPoints(
-        Offset(face.boundingBox.left, face.boundingBox.top),
-        Offset(face.boundingBox.right, face.boundingBox.bottom),
-      );
-      canvas.drawRect(rect, paint);
-    }
-
-  }
-
-  @override
-  bool shouldRepaint(FaceDetectorPainter oldDelegate) {
-    return true;
-  }
-}
 class FaceDetectorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

@@ -11,7 +11,7 @@ import 'package:realtime_face_recognition/ML/UserData.dart';
 
 
 class UserDetailsView extends StatefulWidget {
-  final UserData user;
+  final Recognition user;
   const UserDetailsView({Key? key, required this.user}) : super(key: key);
 
   @override

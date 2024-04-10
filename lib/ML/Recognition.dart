@@ -8,7 +8,8 @@ class Recognition {
   List<double> embeddings;
   double distance;
   String id;
+  String imageUrl;
   /// Constructs a Category.
-  Recognition(this.name,this.location,this.embeddings,this.distance, this.id);
+  Recognition(this.name,this.location,this.embeddings,this.distance, this.id,this.imageUrl);
 
 }

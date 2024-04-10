@@ -3,9 +3,12 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
+
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 import 'package:realtime_face_recognition/Controller/AttendanceController.dart';
 import 'package:realtime_face_recognition/DB/FirebaseService.dart';
 import 'package:realtime_face_recognition/Model/StaffList/Data.dart';
@@ -17,6 +20,14 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 import '../DB/DatabaseHelper.dart';
 import 'Recognition.dart';
 import 'package:http/http.dart' as http;
+import 'dart:io';
+import 'dart:math';
+import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 
 
 class Recognizer {
@@ -32,7 +43,12 @@ class Recognizer {
   final FirebaseService firebaseService = FirebaseService();
   List<Data>? users;
   List<double>? predictedArray;
+  File? _image;
+  late FaceDetector faceDetector;
+
   Recognizer({int? numThreads}) {
+    var options = FaceDetectorOptions();
+    faceDetector = FaceDetector(options: options);
     _interpreterOptions = InterpreterOptions();
 
     if (numThreads != null) {
@@ -103,17 +119,66 @@ class Recognizer {
       {
              String name = users![i].name.toString();
              var url= users![i].faceModel;
-           //  String modifiedUrl = url.replaceFirst('\/home\/hqcj8lltjqyi\/public_html\/', '');
-           //  print(modifiedUrl);
-             List<double> embd = parseStringToList(users![i].faceModel);
-             print(embd);
-             String staff_id=users![i].id.toString();
-             Recognition recognition = Recognition(name,Rect.zero,embd,0,staff_id);
-            registered.putIfAbsent(name, () => recognition);
-            print("R="+name);
+             String modifiedUrl = url.replaceFirst('\/home\/hqcj8lltjqyi\/public_html\/', '');
+             print(modifiedUrl);
+             String filePath = 'https://'+modifiedUrl;
+             String localPath = '/path/to/save/file.png'; // Specify local path where you want to save the file
+
+             // Download the file
+             _image= await urlToFile(filePath);
+           //  File file = File(filePath);
+
+
+             //_image = file;
+             //TODO remove rotation of camera images
+             _image = await removeRotation(_image!);
+
+             var image = await _image?.readAsBytes();
+             var images =  await decodeImageFromList(image!,);
+
+             //TODO passing input to face detector and getting detected faces
+             InputImage inputImage = InputImage.fromFile(_image!);
+             List<Face> faces = await faceDetector.processImage(inputImage);
+             for (Face face in faces) {
+               Rect faceRect = face.boundingBox;
+               num left = faceRect.left < 0 ? 0 : faceRect.left;
+               num top = faceRect.top < 0 ? 0 : faceRect.top;
+               num right = faceRect.right > images.width ? images.width - 1 : faceRect
+                   .right;
+               num bottom = faceRect.bottom > images.height ? images.height - 1 : faceRect
+                   .bottom;
+               num width = right - left;
+               num height = bottom - top;
+
+               //TODO crop face
+               final bytes = _image!.readAsBytesSync();
+               img.Image? faceImg = img.decodeImage(bytes!);
+               img.Image faceImg2 = img.copyCrop(faceImg!, x: left.toInt(), y: top.toInt(), width: width.toInt(), height: height.toInt());
+
+               Recognition recognition = recognize(faceImg2, faceRect);
+               String staff_id=users![i].id.toString();
+               Recognition recognitionss = Recognition(name,Rect.zero,recognition.embeddings,0,staff_id,modifiedUrl);
+               registered.putIfAbsent(name, () => recognitionss);
+               print("R="+name);
+
+             }
+
+
+
       }
 
   }
+
+    Future<File> urlToFile(String imageUrl) async {
+      final response = await http.get(Uri.parse(imageUrl));
+      final imageName = 'my_image.png'; // Set a desired file name
+      final appDir = await getApplicationDocumentsDirectory();
+      final localPath = '${appDir.path}/$imageName';
+      final imageFile = File(localPath);
+      await imageFile.writeAsBytes(response.bodyBytes);
+      return imageFile;
+    }
+
   List<double> parseStringToList(String str) {
     // Remove brackets [ and ]
     String numbersString = str.substring(1, str.length - 1);
@@ -167,9 +232,9 @@ class Recognizer {
     //TODO crop face from image resize it and convert it to float array
     var input = imageToArray(image);
     print(input.shape.toString());
-   List output = List.generate(1, (index) => List.filled(192, 0));
+
     //TODO output array
- //  List output = List.filled(1*192, 0).reshape([1,192]);
+   List output = List.filled(1*192, 0).reshape([1,192]);
 
     //TODO performs inference
     final runs = DateTime.now().millisecondsSinceEpoch;
@@ -180,22 +245,23 @@ class Recognizer {
     print('Time to run inference: $run ms$output');
 
     //TODO convert dynamic list to double list
-    predictedArray = output.first.cast<double>();
+   List<double>predictedArray = output.first.cast<double>();
 
      //TODO looks for the nearest embeeding in the database and returns the pair
 
      Pair pair = findNearest(predictedArray!);
 
     print("distance= ${pair.distance}, pair.name==${pair.name}");
-    return Recognition(pair.name,location,predictedArray!,pair.distance,pair.id);
+    return Recognition(pair.name,location,predictedArray!,pair.distance,pair.id,pair.imageUrl);
   }
   //TODO  looks for the nearest embeeding in the database and returns the pair which contain information of registered face with which face is most similar
   findNearest(List<double> emb) {
-    Pair pair = Pair("Unknown", -5,"");
+    Pair pair = Pair("Unknown", -5,"","");
     for (MapEntry<String, Recognition> item in registered.entries) {
       final String name = item.key;
       List<double> knownEmb = item.value.embeddings;
       final staff_id=item.value.id;
+      final staff_url=item.value.imageUrl;
       double distance = 0.0;
       int minDist = 999;
       for (int i = 0; i < emb.length; i++) {
@@ -206,10 +272,11 @@ class Recognizer {
       print("44455555"+distance.toString()+"ddnm"+pair.distance.toString());
       distance = sqrt(distance);
 
-      if (pair.distance <= -5 || distance <minDist) {
+      if (pair.distance == -5 || distance < pair.distance) {
         pair.distance = distance;
         pair.name = name;
         pair.id=staff_id;
+        pair.imageUrl=staff_url;
       }
 
     }
@@ -220,12 +287,23 @@ class Recognizer {
     interpreter.close();
   }
 
+  //TODO remove rotation of camera images
+  removeRotation(File inputImage) async {
+    final img.Image? capturedImage = img.decodeImage(await File(inputImage!.path).readAsBytes());
+    final img.Image orientedImage = img.bakeOrientation(capturedImage!);
+    return await File(_image!.path).writeAsBytes(img.encodeJpg(orientedImage));
+  }
+
+
+
+
 }
 class Pair{
    String name;
    double distance;
    String id;
-   Pair(this.name,this.distance,this.id);
+   String imageUrl;
+   Pair(this.name,this.distance,this.id,this.imageUrl);
 }
 
 

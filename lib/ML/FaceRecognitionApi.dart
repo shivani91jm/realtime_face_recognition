@@ -140,16 +140,7 @@ class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
     });
   }
 
-  Uint8List concatenatePlanes(List<Plane> planes) {
-    final WriteBuffer allBytes = WriteBuffer();
-    for (Plane plane in planes) {
-      allBytes.putUint8List(plane.bytes);
-    }
-    return allBytes
-        .done()
-        .buffer
-        .asUint8List();
-  }
+
 
   Future<void> initialize(onInit(dynamic response)) async {
     var licenseData = await loadAssetIfExists("assets/regula.license");
@@ -213,23 +204,16 @@ class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
       }
   }
   List<Face> faces = [];
-
-
-
-  //TODO close all resources
   @override
   void dispose() {
     controller?.dispose();
-
     faceDetector.close();
-
     super.dispose();
   }
-
   setImage(bool first, Uint8List imageFile, int type,) {
     if (first) {
-      image1.bitmap = base64Encode(imageFile);
-      image1.imageType = type;
+      image2.bitmap = base64Encode(imageFile);
+      image2.imageType = type;
       matchFaces();
     }
 
@@ -394,8 +378,8 @@ class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
 //       // }
 //     }
     await Future.wait(recognizer.users.map((user) async {
-      image2.bitmap = user.targetimage;
-      image2.imageType = ImageType.PRINTED;
+      image1.bitmap = user.targetimage;
+      image1.imageType = ImageType.PRINTED;
       var request = new MatchFacesRequest();
       request.images = [image1, image2];
       FaceSDK.matchFaces(jsonEncode(request)).then((value) {
@@ -427,7 +411,7 @@ class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
               UserData data = UserData(
                   user.name, image1.bitmap!, user.id, image2.bitmap!);
 
-              Navigator.push(context, MaterialPageRoute(builder: (context) =>  UserDetailsView(user: data,)),);
+             // Navigator.push(context, MaterialPageRoute(builder: (context) =>  UserDetailsView(user: data,)),);
 
             } else {
               faceMatched = false;
@@ -486,8 +470,6 @@ class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
       },
     );
 
-
-
   }
 
 
@@ -524,10 +506,10 @@ class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
           child:Stack(
             children: <Widget>[
               CameraPreview(controller),
-              CustomPaint(
-                size: MediaQuery.of(context).size,
-                painter: FacePainter(), // Assuming you have a FacePainter class
-              ),
+              // CustomPaint(
+              //   size: MediaQuery.of(context).size,
+              //   painter: FacePainter(), // Assuming you have a FacePainter class
+              // ),
             ],
           ),
       ),
@@ -540,10 +522,6 @@ class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
     final img.Image orientedImage = img.bakeOrientation(capturedImage!);
     return await File(_image!.path).writeAsBytes(img.encodeJpg(orientedImage));
   }
-
-
-
-
 }
 
 

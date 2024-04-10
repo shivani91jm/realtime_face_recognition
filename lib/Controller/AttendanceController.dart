@@ -6,6 +6,8 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:realtime_face_recognition/Activity/DashboardPage.dart';
+import 'package:realtime_face_recognition/Activity/SettingPage.dart';
+import 'package:realtime_face_recognition/Activity/StaffRecogniationPage.dart';
 import 'package:realtime_face_recognition/Constants/custom_snackbar.dart';
 import 'package:realtime_face_recognition/ML/FaceRecognitionApi.dart';
 import 'package:realtime_face_recognition/Model/StaffList/Data.dart';
@@ -51,7 +53,7 @@ class AttendanceController extends GetxController {
            {
              CustomSnackBar.successSnackBar("Hey ${name} Attendance Successfully",context!);
              var camera=  await availableCameras();
-             Navigator.pushReplacement(context!, MaterialPageRoute(builder: (context) => StaffRecognationPage2(cameras: camera,)),);
+             Navigator.pushReplacement(context!, MaterialPageRoute(builder: (context) => SettingPage()),);
            }
         }
 
@@ -62,11 +64,11 @@ class AttendanceController extends GetxController {
           {
 
 
-            CustomSnackBar.errorSnackBar("Already Punch Out...",context!);
+            //CustomSnackBar.errorSnackBar("Already Punch Out...",context!);
             var camera=  await availableCameras();
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) =>  StaffRecognationPage2(cameras: camera,)),
+              MaterialPageRoute(builder: (context) =>  SettingPage()),
             );
 
           }

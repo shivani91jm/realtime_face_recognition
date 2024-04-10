@@ -132,15 +132,12 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
 
     //TODO call the method to perform face recognition on detected faces
   }
-
   //TODO remove rotation of camera images
   removeRotation(File inputImage) async {
     final img.Image? capturedImage = img.decodeImage(await File(inputImage!.path).readAsBytes());
     final img.Image orientedImage = img.bakeOrientation(capturedImage!);
     return await File(_image!.path).writeAsBytes(img.encodeJpg(orientedImage));
   }
-
-
   //TODO close all resources
   @override
   void dispose() {
@@ -156,8 +153,6 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
       faces;
     });
   }
-
-
 
   //TODO Face Registration Dialogue
   TextEditingController textEditingController = TextEditingController();

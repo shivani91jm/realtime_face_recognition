@@ -245,7 +245,7 @@ class _SettingPageState extends State<SettingPage> {
                                       var camera=  await availableCameras();
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(builder: (context) =>  StaffRecognationPage2(cameras: camera,)),
+                                        MaterialPageRoute(builder: (context) =>  StaffRecognationPage(cameras: camera,)),
                                       );
                                     },
                                     child: Container(
@@ -274,7 +274,7 @@ class _SettingPageState extends State<SettingPage> {
                                       var camera=  await availableCameras();
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(builder: (context) =>  StaffRecognationPage2(cameras: camera,)),
+                                        MaterialPageRoute(builder: (context) =>  StaffRecognationPage(cameras: camera,)),
                                       );
                                      //  Navigator.push(context, MaterialPageRoute(builder: (_) => AutoDectionPage(cameras: camera)));
 
