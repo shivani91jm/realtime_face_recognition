@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,7 +12,7 @@ import 'package:convert_native_img_stream/convert_native_img_stream.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_face_api/face_api.dart';
+import 'package:flutter_face_api/face_api.dart' hide Image;
 import 'package:get/get.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:intl/intl.dart';
@@ -29,8 +30,7 @@ import 'package:realtime_face_recognition/ML/Recognition2.dart';
 import 'package:realtime_face_recognition/ML/Recognizer.dart';
 import 'package:image/image.dart' as img;
 import 'package:realtime_face_recognition/ML/UserData.dart';
-import 'package:realtime_face_recognition/Model/Userattendancemodel.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 
 
 class StaffRecognationPage extends StatefulWidget  {
@@ -60,8 +60,8 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
   late Recognizer222 recognizer222;
   String _similarity = "nil";
   String _liveness = "nil";
-  var image1 = new MatchFacesImage();
-  var image2 = new MatchFacesImage();
+   var image1 = new MatchFacesImage();
+   var image2 = new MatchFacesImage();
   BuildContext? contextss= Get.context;
   @override
   void initState() {
@@ -75,30 +75,12 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
     recognizer222 = Recognizer222();
     //TODO initialize camera footage
    initializeCamera(widget.cameras[1]);
-    const EventChannel('flutter_face_api/event/video_encoder_completion')
-        .receiveBroadcastStream()
-        .listen((event) {
-      var completion = VideoEncoderCompletion.fromJson(json.decode(event))!;
-      print("VideoEncoderCompletion:");
-      print("    success:  ${completion.success}");
-      print("    transactionId:  ${completion.transactionId}");
-    });
-    const EventChannel('flutter_face_api/event/onCustomButtonTappedEvent')
-        .receiveBroadcastStream()
-        .listen((event) {
-      print("Pressed button with id: $event");
-    });
-    const EventChannel('flutter_face_api/event/livenessNotification')
-        .receiveBroadcastStream()
-        .listen((event) {
-      var notification = LivenessNotification.fromJson(json.decode(event));
-      print("LivenessProcessStatus: ${notification!.status}");
-    });
+
   }
 
   //TODO code to initialize the camera feed
   initializeCamera(CameraDescription cameraDescription) async {
-    controller = CameraController(cameraDescription, ResolutionPreset.high);
+    controller = CameraController(cameraDescription, ResolutionPreset.high,imageFormatGroup: ImageFormatGroup.yuv420);
     try {
       await controller.initialize().then((_) {
         if (!mounted) return;
@@ -138,11 +120,11 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
 
       //TODO convert frame into InputImage format
       InputImage? inputImage = recognizer222.getInputImage(frame!,description);
-      Uint8List? imageBytes = await inputImage!.bytes;
-      File imageFile = await createTemporaryFile();
-      var bbb= await imageFile.writeAsBytes(imageBytes!);
-      image2.bitmap=base64Encode(bbb.readAsBytesSync());
-      image2.imageType=ImageType.PRINTED;
+     // Uint8List? imageBytes = await inputImage!.bytes;
+     // File imageFile = await createTemporaryFile();
+     // var bbb= await imageFile.writeAsBytes(imageBytes!);
+     // image2.bitmap=base64Encode(bbb.readAsBytesSync());
+     // image2.imageType=ImageType.PRINTED;
       //TODO pass InputImage to face detection model and detect faces
       List<Face> faces = await faceDetector.processImage(inputImage!);
       //TODO perform face recognition on detected faces
@@ -181,171 +163,337 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
   bool register = false;
   // TODO perform Face Recognition
   performFaceRecognition(List<Face> faces,BuildContext context) async {
-
     //TODO convert CameraImage to Image and rotate it so that our frame will be in a portrait
     image = convertYUV420ToImage(frame!);
-    image =img.copyRotate(image!, angle: camDirec == CameraLensDirection.front?270:90);
+    image = img.copyRotate(
+        image!, angle: camDirec == CameraLensDirection.front ? 270 : 90);
 
     for (Face face in faces) {
-      // var faceRect = face!.boundingBox;
+       var faceRect = face!.boundingBox;
       //
       // // Calculate the width and height of the bounding box
-      // int? width = (faceRect.right! - faceRect.left!).toInt();
-      // int height = (faceRect.bottom! - faceRect.top!).toInt();
+       int? width = (faceRect.right! - faceRect.left!).toInt();
+      int height = (faceRect.bottom! - faceRect.top!).toInt();
       //
       // // Get the left and top coordinates of the bounding box
-      // int left = faceRect.left!.toInt();
-      // int top = faceRect.top!.toInt();
+      int left = faceRect.left!.toInt();
+      int top = faceRect.top!.toInt();
       //
       // // Crop the face directly from the image
-      // img.Image croppedFace = img.copyCrop(image!, x: left, y: top, width: width, height: height);
+       img.Image croppedFace = img.copyCrop(image!, x: left, y: top, width: width, height: height);
       //
 
-
+       Uint8List imges=  Uint8List.fromList(img.encodeBmp(croppedFace));
+       String base64String = base64Encode(imges);
+       image2.bitmap=base64String;
+       image2.imageType=ImageType.PRINTED;
       //TODO pass cropped face to face recognition model
-      Recognition recognition = recognizer.recognize(image!,  face.boundingBox);
-      if(recognition.distance>1.2){
+      Recognition recognition = recognizer.recognize(croppedFace, face.boundingBox);
+      if (recognition.distance > 0.90) {
         recognition.name = "Unknown";
       }
 
       recognitions.add(recognition);
 
-      if(recognition.name!="Unknown")
-      {
-        var ur="https://"+recognition.imageUrl;
-        File userss=await recognizer.urlToFile(ur);
-        image1.bitmap = base64Encode(File(userss!.path).readAsBytesSync() );
-        image1.imageType =  ImageType.PRINTED;
-        var request = new MatchFacesRequest();
-        request.images = [image1, image2];
-        print("hjdsfjk"+request.images.toString());
-        FaceSDK.matchFaces(jsonEncode(request)).then((value) {
-          var response = MatchFacesResponse.fromJson(json.decode(value));
-          print("object+"+response.toString());
-          FaceSDK.matchFacesSimilarityThresholdSplit(
-              jsonEncode(response!.results), 0.75)
-              .then((str) {
-            var split = MatchFacesSimilarityThresholdSplit.fromJson(
-                json.decode(str));
+      // if (recognition.name!= "Unknown") {
+      //   // var ur="https://"+recognition.imageUrl;
+      //   // File userss=await recognizer.urlToFile(ur);
+      //   // image1.bitmap = base64Encode(File(userss!.path).readAsBytesSync() );
+      //   // image1.imageType =  ImageType.PRINTED;
+      //   // var request = new MatchFacesRequest();
+      //   // request.images = [image1, image2];
+      //   // print("hjdsfjk"+request.images.toString());
+      //   // FaceSDK.matchFaces(jsonEncode(request)).then((value) {
+      //   //   var response = MatchFacesResponse.fromJson(json.decode(value));
+      //   //   print("object+"+response.toString());
+      //   //   FaceSDK.matchFacesSimilarityThresholdSplit(
+      //   //       jsonEncode(response!.results), 0.75)
+      //   //       .then((str) {
+      //   //     var split = MatchFacesSimilarityThresholdSplit.fromJson(
+      //   //         json.decode(str));
+      //   //
+      //   //     setState(() {
+      //   //       _similarity = split!.matchedFaces.isNotEmpty
+      //   //           ? (split.matchedFaces[0]!.similarity! * 100).toStringAsFixed(2)
+      //   //           : "error";
+      //   //       log("similarity: $_similarity");
+      //   //
+      //   //       if (_similarity != "error" && double.parse(_similarity) > 90.00) {
+      //   //         //print("hghg" + user.name);
+      //   //         // faceMatched = true;
+      //   //         //  setState(() {
+      //   //         //    trialNumber = 1;
+      //   //         //    //isMatching = false;
+      //   //         //  });
+      //   //
+      //   //         _audioPlayer
+      //   //           ..stop()
+      //   //           ..setReleaseMode(ReleaseMode.release)
+      //   //           ..play(AssetSource("sucessAttendance.m4r"));
+      //   // UserData data = UserData(
+      //   //     user.name, image1.bitmap!, user.id, image2.bitmap!);
+      //
+      //   Navigator.pushReplacement(context!, MaterialPageRoute(
+      //       builder: (context) => UserDetailsView(user: recognition,image2: croppedFace,)),);
+      // }
 
-            setState(() {
-              _similarity = split!.matchedFaces.isNotEmpty
-                  ? (split.matchedFaces[0]!.similarity! * 100).toStringAsFixed(2)
-                  : "error";
-              log("similarity: $_similarity");
+      //});
+      // });
+      //   });
+       // Batch multiple face matching requests
+       List<MatchFacesImage> batchRequests = [];
 
-              if (_similarity != "error" && double.parse(_similarity) > 90.00) {
-                //print("hghg" + user.name);
-                // faceMatched = true;
-                //  setState(() {
-                //    trialNumber = 1;
-                //    //isMatching = false;
-                //  });
+       for (UserData user in recognizer222.users) {
+       //  File userss=await recognizer.urlToFile(user.targetimage);
+        // image1.bitmap = base64Encode(File(userss!.path).readAsBytesSync() );
+         image1.imageType =  ImageType.PRINTED;
+         batchRequests.add(image1);
+       }
+       batchRequests.add(image2);
+       var request = new MatchFacesRequest();
+       request.images = batchRequests;
+       FaceSDK.matchFaces(jsonEncode(request)).then((value) {
+         var response = MatchFacesResponse.fromJson(json.decode(value));
+         FaceSDK.matchFacesSimilarityThresholdSplit(
+             jsonEncode(response!.results), 0.75)
+             .then((str) {
+           var split = MatchFacesSimilarityThresholdSplit.fromJson(
+               json.decode(str));
 
-                _audioPlayer
-                  ..stop()
-                  ..setReleaseMode(ReleaseMode.release)
-                  ..play(AssetSource("sucessAttendance.m4r"));
-                // UserData data = UserData(
-                //     user.name, image1.bitmap!, user.id, image2.bitmap!);
+           setState(() {
+             _similarity = split!.matchedFaces.isNotEmpty
+                 ? (split.matchedFaces[0]!.similarity! * 100).toStringAsFixed(2)
+                 : "error";
+             log("similarity: $_similarity");
 
-                Navigator.pushReplacement(context!, MaterialPageRoute(builder: (context) =>  UserDetailsView(user: recognition,)),);
+             if (_similarity != "error" && double.parse(_similarity) > 90.00) {
+               //print("hghg" + user.name);
+               // faceMatched = true;
+               //  setState(() {
+               //    trialNumber = 1;
+               //    //isMatching = false;
+               //  });
 
-              } else {
-                //  faceMatched = false;
-                print("no image found");
-              }
-            });
-          });
-        });
+               _audioPlayer
+                 ..stop()
+                 ..setReleaseMode(ReleaseMode.release)
+                 ..play(AssetSource("sucessAttendance.m4r"));
+               // UserData data = UserData(
+               //     user.name, image1.bitmap!, user.id, image2.bitmap!);
 
+             //  Navigator.pushReplacement(context!, MaterialPageRoute(builder: (context) =>  UserDetailsView(user: recognition,)),);
 
+             }
+             else {
 
-        // await Future.wait(recognitions!.map((user) async {
-        //         File userss=await recognizer.urlToFile(user.imageUrl);
-        //   image1.bitmap = base64Encode(File(userss!.path).readAsBytesSync() );
-        //   image1.imageType =  ImageType.PRINTED;
-        //
-        //   var request = new MatchFacesRequest();
-        //   request.images = [image1, image2];
-        //   FaceSDK.matchFaces(jsonEncode(request)).then((value) {
-        //     var response = MatchFacesResponse.fromJson(json.decode(value));
-        //     FaceSDK.matchFacesSimilarityThresholdSplit(
-        //         jsonEncode(response!.results), 0.75)
-        //         .then((str) {
-        //       var split = MatchFacesSimilarityThresholdSplit.fromJson(
-        //           json.decode(str));
-        //
-        //       setState(() {
-        //         _similarity = split!.matchedFaces.isNotEmpty
-        //             ? (split.matchedFaces[0]!.similarity! * 100).toStringAsFixed(2)
-        //             : "error";
-        //         log("similarity: $_similarity");
-        //
-        //         if (_similarity != "error" && double.parse(_similarity) > 90.00) {
-        //           //print("hghg" + user.name);
-        //           // faceMatched = true;
-        //           //  setState(() {
-        //           //    trialNumber = 1;
-        //           //    //isMatching = false;
-        //           //  });
-        //
-        //           _audioPlayer
-        //             ..stop()
-        //             ..setReleaseMode(ReleaseMode.release)
-        //             ..play(AssetSource("sucessAttendance.m4r"));
-        //           UserData data = UserData(
-        //               user.name, image1.bitmap!, user.id, image2.bitmap!);
-        //
-        //           Navigator.pushReplacement(context!, MaterialPageRoute(builder: (context) =>  UserDetailsView(user: recognition,)),);
-        //
-        //         } else {
-        //           //  faceMatched = false;
-        //           print("no image found");
-        //         }
-        //       });
-        //     });
-        //   });
-        // }));
-      }
+               print("no image found");
+             }
+           });
+         });
+       });
 
-      setState(() {
-        isBusy=false;
-      });
+       }
+
+      // setState(() {
+      //   isBusy = false;
+      // });
+
+    // showDialog(
+    //   context: context,
+    //   builder: (ctx) => AlertDialog(
+    //     title: const Text("Face Registration",textAlign: TextAlign.center),alignment: Alignment.center,
+    //     content: SizedBox(
+    //       height: 340,
+    //       child: Column(
+    //         crossAxisAlignment: CrossAxisAlignment.center,
+    //         children: [
+    //           const SizedBox(height: 20,),
+    //           Image.memory(Uint8List.fromList(img.encodeBmp(image!)),
+    //             width: 200,
+    //             height: 200,
+    //           ),
+    //
+    //           const SizedBox(height: 10,),
+    //
+    //         ],
+    //       ),
+    //     ),contentPadding: EdgeInsets.zero,
+    //   ),
+    // );
     }
 
-  }
-  Future<void> initPlatformState() async {
-    var onInitialized = (json) {
-      var response = jsonDecode(json);
-      if (!response["success"]) {
-        print("Init failed: ");
-        print(json);
-      } else {
-        print("Init complete");
-      }
-    };
-    initialize(onInitialized);
-  }
-  Future<void> initialize(onInit(dynamic response)) async {
-    var licenseData = await loadAssetIfExists("assets/regula.license");
-    if (licenseData != null) {
-      var config = InitializationConfiguration();
-      config.license = base64Encode(licenseData.buffer.asUint8List());
-      FaceSDK.initializeWithConfig(config.toJson()).then(onInit);
-    } else
-      FaceSDK.initialize().then(onInit);
-  }
 
-  Future<ByteData?> loadAssetIfExists(String path) async {
-    try {
-      return await rootBundle.load(path);
-    } catch (_) {
-      return null;
-    }
-  }
+  // initDB() async {
+  //   await dbHelper.init();
+  //   try {
+  //     final result = await InternetAddress.lookup('google.com');
+  //     if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+  //       final SharedPreferences prefs = await SharedPreferences.getInstance();
+  //       var admin_id = await prefs.getString('admin_id') ?? "";
+  //       var url = Urls.staffListUrl + "admin_id=${admin_id}";
+  //       print("res body" + url.toString());
+  //       final response = await http.get(
+  //         Uri.parse(url), headers: <String, String>{
+  //         'Content-Type': 'application/json; charset=UTF-8',},);
+  //       print("response" + response.body.toString());
+  //       if (response.statusCode == 200) {
+  //         StaffListModel res = StaffListModel.fromJson(
+  //             jsonDecode(response.body));
+  //         print("vdbvsbd" + res.toString());
+  //         if (res != null) {
+  //           var info = res.success;
+  //           if (info == true) {
+  //             var   users = res.data;
+  //             final allRows = await dbHelper.queryAllRows();
+  //             print("allrows"+allRows.length.toString()+"user"+allRows.isEmpty.toString());
+  //
+  //             if(allRows.isEmpty) {
+  //               print("worng is value");
+  //               for (int i = 0; i < users!.length; i++) {
+  //                 String name = users![i].name.toString();
+  //                 var url = users![i].faceModel;
+  //                 String modifiedUrl = url.replaceFirst(
+  //                     '\/home\/hqcj8lltjqyi\/public_html\/', '');
+  //                 print(modifiedUrl);
+  //                 http.Response response = await http.get(Uri.parse("https://"+modifiedUrl));
+  //                 if (response.statusCode == 200) {
+  //                   // Convert the image bytes to Base64
+  //                   String image1 = base64Encode(response.bodyBytes);
+  //                   print('Base64 encoded image: $image1');
+  //                   Map<String, dynamic> row = {
+  //                     DatabaseHelper.columnName: name,
+  //                     DatabaseHelper.columnEmbedding: image1,
+  //                     DatabaseHelper.columnStaffId: users![i].id
+  //                   };
+  //                   final id = await dbHelper.insert(row);
+  //                   print('inserted row id: $id');
+  //                 } else {
+  //                   print('Failed to fetch image: ${response.statusCode}');
+  //                 }
+  //
+  //
+  //               }
+  //               fetchstaffList();
+  //             }
+  //
+  //             else
+  //             {
+  //               if(allRows.length!=users!.length)
+  //               {
+  //                 print("false is value");
+  //                 for (int i = 0; i < users!.length; i++) {
+  //                   String name = users![i].name.toString();
+  //                   var url = users![i].faceModel;
+  //                   String modifiedUrl = url.replaceFirst(
+  //                       '\/home\/hqcj8lltjqyi\/public_html\/', '');
+  //                   print(modifiedUrl);
+  //                   http.Response response = await http.get(Uri.parse("https://"+modifiedUrl));
+  //                   if (response.statusCode == 200) {
+  //                     // Convert the image bytes to Base64
+  //                     String image1 = base64Encode(response.bodyBytes);
+  //                     print('Base64 encoded image: $image1');
+  //                     Map<String, dynamic> row = {
+  //                       DatabaseHelper.columnName: name,
+  //                       DatabaseHelper.columnEmbedding: image1,
+  //                       DatabaseHelper.columnStaffId: users![i].id
+  //                     };
+  //                     final id = await dbHelper.insert(row);
+  //                     print('inserted row id: $id');
+  //                   } else {
+  //                     print('Failed to fetch image: ${response.statusCode}');
+  //                   }
+  //                 }
+  //                 fetchstaffList();
+  //               }
+  //               else
+  //               {
+  //                 print("true is value");
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //       else if (response.statusCode == 401) {
+  //         print("data" + response.body.toString());
+  //
+  //         // Navigator.push(context!, MaterialPageRoute(builder: (context) => LoginPage()),);
+  //       }
+  //       else if (response.statusCode == 500) {
+  //         print("data" + response.body.toString());
+  //       }
+  //       else {
+  //         print("data" + response.body.toString());
+  //       }
+  //     }
+  //   }
+  //   on SocketException catch (_) {
+  //
+  //   }
+  //
+  // }
+  // fetchstaffList() async{
+  //   await dbHelper.init();
+  //   final allRows = await dbHelper.queryAllRows();
+  //   if(allRows.isNotEmpty) {
+  //     for (final row in allRows) {
+  //       //  debugPrint(row.toString());
+  //       print(row[DatabaseHelper.columnName]);
+  //       String name = row[DatabaseHelper.columnName];
+  //       String url = row[DatabaseHelper.columnEmbedding];
+  //       String id = row[DatabaseHelper.columnStaffId];
+  //       print(url);
+  //
+  //       UserData data = UserData(name, "", id, url);
+  //       users.add(data);
+  //
+  //     }
+  //   }
+  // }
+
+
+
 
   // TODO method to convert CameraImage to Image
+  // img.Image convertYUV420ToImage(CameraImage cameraImage) {
+  //   final width = cameraImage.width;
+  //   final height = cameraImage.height;
+  //   final yRowStride = cameraImage.planes[0].bytesPerRow;
+  //   final uvRowStride = cameraImage.planes[1].bytesPerRow;
+  //   final uvPixelStride = cameraImage.planes[1].bytesPerPixel!;
+  //   final image = img.Image(width:width, height:height);
+  //   for (var w = 0; w < width; w++) {
+  //     for (var h = 0; h < height; h++) {
+  //       final uvIndex = uvPixelStride * (w / 2).floor() + uvRowStride * (h / 2).floor();
+  //       final index = h * width + w;
+  //       final yIndex = h * yRowStride + w;
+  //
+  //       final y = cameraImage.planes[0].bytes[yIndex];
+  //       final u = cameraImage.planes[1].bytes[uvIndex];
+  //       final v = cameraImage.planes[2].bytes[uvIndex];
+  //
+  //
+  //       int color = yuv2rgb(y, u, v);
+  //       int r = (color >> 16) & 0xFF;
+  //       int g = (color >> 8) & 0xFF;
+  //       int b = color & 0xFF;
+  //
+  //       // If the color is red, make it transparent
+  //       if (r > 200 && g < 50 && b < 50) {
+  //         image.data!.setPixelRgba(w, h, 0, 0, 0, 0);
+  //       } else {
+  //         image.data!.setPixelRgba(w, h, r, g, b,0);
+  //       }
+  //     }
+  //
+  //
+  //
+  //       //= yuv2rgb(y, u, v);
+  //
+  //    // }
+  //   }
+  //   return image;
+  // }
+
   img.Image convertYUV420ToImage(CameraImage cameraImage) {
     final width = cameraImage.width;
     final height = cameraImage.height;
@@ -363,11 +511,30 @@ class _StaffRecognationPageState extends State<StaffRecognationPage> {
         final u = cameraImage.planes[1].bytes[uvIndex];
         final v = cameraImage.planes[2].bytes[uvIndex];
 
-        image.data!.setPixelR(w, h, yuv2rgb(y, u, v));//= yuv2rgb(y, u, v);
+        int color = yuv2rgb(y, u, v);
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = (color >> 8) & 0xFF;
+
+        // If the color is blue, make it transparent
+        // if (b > 100 && g < 50 && r < 50) {
+        //   image.data!.setPixelRgba(w, h, 0, 0, 0, 0);
+        // } else {
+        //   image.data!.setPixelRgba(w, h, r, g, b, 0);
+        // }
+        // if ((b > 200 && g < 50 && r < 50) || (r > 80 && g < 80 && b > 80)) {
+        //   image.data!.setPixelRgba(w, h, 0, 0, 0, 0);
+        // } else {
+        //   image.data!.setPixelRgba(w, h, r, g, b, 0);
+        // }
+        image.data!.setPixelRgba(w, h, r, g, b, 0);
       }
     }
     return image;
   }
+
+
+
   int yuv2rgb(int y, int u, int v) {
     // Convert yuv pixel to rgb
     var r = (y + v * 1436 / 1024 - 179).round();

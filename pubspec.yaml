@@ -55,8 +55,9 @@ dependencies:
   provider: any
   path: any
   convert_native_img_stream: any
-  flutter_face_api: any
+  flutter_face_api: ^4.1.1
   image_picker: any
+
 
 
 

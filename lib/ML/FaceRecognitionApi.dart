@@ -64,7 +64,7 @@ class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
   List<MatchFacesRequest> requests = [];
   @override
   void initState() {
-    initPlatformState();
+
     super.initState();
     var options = FaceDetectorOptions();
     faceDetector = FaceDetector(options: options);
@@ -73,39 +73,10 @@ class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
     //TODO initialize camera footage
     initializeCamera();
 
-    const EventChannel('flutter_face_api/event/video_encoder_completion')
-        .receiveBroadcastStream()
-        .listen((event) {
-      var completion = VideoEncoderCompletion.fromJson(json.decode(event))!;
-      print("VideoEncoderCompletion:");
-      print("    success:  ${completion.success}");
-      print("    transactionId:  ${completion.transactionId}");
-    });
-    const EventChannel('flutter_face_api/event/onCustomButtonTappedEvent')
-        .receiveBroadcastStream()
-        .listen((event) {
-      print("Pressed button with id: $event");
-    });
-    const EventChannel('flutter_face_api/event/livenessNotification')
-        .receiveBroadcastStream()
-        .listen((event) {
-      var notification = LivenessNotification.fromJson(json.decode(event));
-      print("LivenessProcessStatus: ${notification!.status}");
-    });
+
   }
 
-  Future<void> initPlatformState() async {
-    var onInitialized = (json) {
-      var response = jsonDecode(json);
-      if (!response["success"]) {
-        print("Init failed: ");
-        print(json);
-      } else {
-        print("Init complete");
-      }
-    };
-    initialize(onInitialized);
-  }
+
 
 
   //TODO code to initialize the camera feed
@@ -142,23 +113,7 @@ class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
 
 
 
-  Future<void> initialize(onInit(dynamic response)) async {
-    var licenseData = await loadAssetIfExists("assets/regula.license");
-    if (licenseData != null) {
-      var config = InitializationConfiguration();
-      config.license = base64Encode(licenseData.buffer.asUint8List());
-      FaceSDK.initializeWithConfig(config.toJson()).then(onInit);
-    } else
-      FaceSDK.initialize().then(onInit);
-  }
 
-  Future<ByteData?> loadAssetIfExists(String path) async {
-    try {
-      return await rootBundle.load(path);
-    } catch (_) {
-      return null;
-    }
-  }
 
   Future takePicture() async {
     if (!controller.value.isInitialized) {
@@ -252,7 +207,7 @@ class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
     print("dhfhjdhfd"+recognizer.users.length.toString());
     bool faceMatched=false;
 
-    recognizer.users.sort((a, b) => double.tryParse(a.id)!.compareTo(double.tryParse(b.id)!));
+  //  recognizer.users.sort((a, b) => double.tryParse(a.id)!.compareTo(double.tryParse(b.id)!));
 //     for (UserData user in recognizer.users) {
 //       image2.bitmap = user.targetimage;
 //       image2.imageType = ImageType.PRINTED;
@@ -377,50 +332,50 @@ class _StaffRecognationPage2State extends State<StaffRecognationPage2> {
 //       //   }
 //       // }
 //     }
-    await Future.wait(recognizer.users.map((user) async {
-      image1.bitmap = user.targetimage;
-      image1.imageType = ImageType.PRINTED;
-      var request = new MatchFacesRequest();
-      request.images = [image1, image2];
-      FaceSDK.matchFaces(jsonEncode(request)).then((value) {
-        var response = MatchFacesResponse.fromJson(json.decode(value));
-        FaceSDK.matchFacesSimilarityThresholdSplit(
-            jsonEncode(response!.results), 0.75)
-            .then((str) {
-          var split = MatchFacesSimilarityThresholdSplit.fromJson(
-              json.decode(str));
-
-          setState(() {
-            _similarity = split!.matchedFaces.isNotEmpty
-                ? (split.matchedFaces[0]!.similarity! * 100).toStringAsFixed(2)
-                : "error";
-            log("similarity: $_similarity");
-
-            if (_similarity != "error" && double.parse(_similarity) > 90.00) {
-              //print("hghg" + user.name);
-              faceMatched = true;
-              setState(() {
-                trialNumber = 1;
-                //isMatching = false;
-              });
-
-              _audioPlayer
-                ..stop()
-                ..setReleaseMode(ReleaseMode.release)
-                ..play(AssetSource("sucessAttendance.m4r"));
-              UserData data = UserData(
-                  user.name, image1.bitmap!, user.id, image2.bitmap!);
-
-             // Navigator.push(context, MaterialPageRoute(builder: (context) =>  UserDetailsView(user: data,)),);
-
-            } else {
-              faceMatched = false;
-              print("no image found");
-            }
-          });
-        });
-      });
-    }));
+//     await Future.wait(recognizer.users.map((user) async {
+//       image1.bitmap = user.targetimage;
+//       image1.imageType = ImageType.PRINTED;
+//       var request = new MatchFacesRequest();
+//       request.images = [image1, image2];
+//       FaceSDK.matchFaces(jsonEncode(request)).then((value) {
+//         var response = MatchFacesResponse.fromJson(json.decode(value));
+//         FaceSDK.matchFacesSimilarityThresholdSplit(
+//             jsonEncode(response!.results), 0.75)
+//             .then((str) {
+//           var split = MatchFacesSimilarityThresholdSplit.fromJson(
+//               json.decode(str));
+//
+//           setState(() {
+//             _similarity = split!.matchedFaces.isNotEmpty
+//                 ? (split.matchedFaces[0]!.similarity! * 100).toStringAsFixed(2)
+//                 : "error";
+//             log("similarity: $_similarity");
+//
+//             if (_similarity != "error" && double.parse(_similarity) > 90.00) {
+//               //print("hghg" + user.name);
+//               faceMatched = true;
+//               setState(() {
+//                 trialNumber = 1;
+//                 //isMatching = false;
+//               });
+//
+//               _audioPlayer
+//                 ..stop()
+//                 ..setReleaseMode(ReleaseMode.release)
+//                 ..play(AssetSource("sucessAttendance.m4r"));
+//               UserData data = UserData(
+//                   user.name, image1.bitmap!, user.id, image2.bitmap!);
+//
+//              // Navigator.push(context, MaterialPageRoute(builder: (context) =>  UserDetailsView(user: data,)),);
+//
+//             } else {
+//               faceMatched = false;
+//               print("no image found");
+//             }
+//           });
+//         });
+//       });
+//     }));
   }
 
   //TODO toggle camera direction

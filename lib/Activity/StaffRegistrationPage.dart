@@ -215,8 +215,7 @@ if(_image==null)
   }
 
     return CustomPaint(
-      painter: FacePainter(
-          facesList: faces, imageFile: _image!.path),
+      painter: FacePainter(),
     );
   }
 
@@ -339,24 +338,19 @@ if(_image==null)
 }
 
 class FacePainter extends CustomPainter {
-  List<Face> facesList;
-  dynamic imageFile;
-  FacePainter({required this.facesList, @required this.imageFile});
+
+  FacePainter();
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (imageFile != null) {
-      canvas.drawImage(imageFile, Offset.zero, Paint());
-    }
-
     Paint p = Paint();
     p.color = Colors.blue;
     p.style = PaintingStyle.stroke;
     p.strokeWidth = 3;
 
-    for (Face face in facesList) {
-      canvas.drawRect(face.boundingBox, p);
-    }
+    final rect = Rect.fromLTWH(40, 200, 320, 400);
+    //  size.width! /2 , size.height / 4, size.width / 2, size.height / 2);
+    canvas.drawRect(rect, p);
   }
 
   @override
@@ -364,3 +358,6 @@ class FacePainter extends CustomPainter {
     return true;
   }
 }
+
+
+

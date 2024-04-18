@@ -9,7 +9,7 @@ import 'package:image/image.dart' as img;
 import 'package:provider/provider.dart';
 
 import 'package:realtime_face_recognition/Activity/SplashScreen.dart';
-import 'package:realtime_face_recognition/Activity/faceapi.dart';
+
 
 import 'package:realtime_face_recognition/Controller/BottomNavigationProvider.dart';
 import 'package:realtime_face_recognition/Controller/CameraProvider.dart';

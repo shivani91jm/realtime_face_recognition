@@ -11,11 +11,12 @@ import 'package:get/get.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 import 'package:path_provider/path_provider.dart';
+import 'package:realtime_face_recognition/Activity/FcaRecognition3.dart';
 import 'package:realtime_face_recognition/Activity/LoginPage.dart';
 import 'package:realtime_face_recognition/Activity/StaffRecogniationPage.dart';
 import 'package:realtime_face_recognition/Activity/StaffRegistrationPage.dart';
 import 'package:realtime_face_recognition/Constants/AppConstants.dart';
-import 'package:realtime_face_recognition/ML/FaceRecognitionApi.dart';
+
 import 'package:realtime_face_recognition/Utils/AppFontFamily.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image/image.dart' as img;
@@ -134,10 +135,7 @@ class _SettingPageState extends State<SettingPage> {
                           GestureDetector(
                             onTap: ()async {
                               var camera=  await availableCameras();
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) =>  StaffRegistrationPage(cameras: camera,)),
-                              );
+                              Navigator.push(context, MaterialPageRoute(builder: (context) =>  StaffRegistrationPage(cameras: camera,)),);
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -174,10 +172,7 @@ class _SettingPageState extends State<SettingPage> {
                                       onPressed: () async
                                       {
                                         var camera=  await availableCameras();
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(builder: (context) =>  StaffRegistrationPage(cameras: camera,)),
-                                        );
+                                        Navigator.push(context, MaterialPageRoute(builder: (context) =>  StaffRegistrationPage(cameras: camera,)),);
                                       },
                                     ),
                                   ),
@@ -245,7 +240,7 @@ class _SettingPageState extends State<SettingPage> {
                                       var camera=  await availableCameras();
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(builder: (context) =>  StaffRecognationPage(cameras: camera,)),
+                                        MaterialPageRoute(builder: (context) =>  StaffRecognationPage2(cameras: camera,)),
                                       );
                                     },
                                     child: Container(
@@ -274,7 +269,7 @@ class _SettingPageState extends State<SettingPage> {
                                       var camera=  await availableCameras();
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(builder: (context) =>  StaffRecognationPage(cameras: camera,)),
+                                        MaterialPageRoute(builder: (context) =>  StaffRecognationPage2(cameras: camera,)),
                                       );
                                      //  Navigator.push(context, MaterialPageRoute(builder: (_) => AutoDectionPage(cameras: camera)));
 

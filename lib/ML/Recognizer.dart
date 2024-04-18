@@ -157,7 +157,7 @@ class Recognizer {
 
                Recognition recognition = recognize(faceImg2, faceRect);
                String staff_id=users![i].id.toString();
-               Recognition recognitionss = Recognition(name,Rect.zero,recognition.embeddings,0,staff_id,modifiedUrl);
+               Recognition recognitionss = Recognition(name,Rect.zero,recognition.embeddings,0,staff_id,modifiedUrl,"");
                registered.putIfAbsent(name, () => recognitionss);
                print("R="+name);
 
@@ -252,11 +252,11 @@ class Recognizer {
      Pair pair = findNearest(predictedArray!);
 
     print("distance= ${pair.distance}, pair.name==${pair.name}");
-    return Recognition(pair.name,location,predictedArray!,pair.distance,pair.id,pair.imageUrl);
+    return Recognition(pair.name,location,predictedArray!,pair.distance,pair.id,pair.imageUrl,"");
   }
   //TODO  looks for the nearest embeeding in the database and returns the pair which contain information of registered face with which face is most similar
   findNearest(List<double> emb) {
-    Pair pair = Pair("Unknown", -5,"","");
+    Pair pair = Pair("Unknown", -5,"","","");
     for (MapEntry<String, Recognition> item in registered.entries) {
       final String name = item.key;
       List<double> knownEmb = item.value.embeddings;
@@ -268,8 +268,6 @@ class Recognizer {
         double diff = emb[i] - knownEmb[i];
         distance += diff*diff;
       }
-
-      print("44455555"+distance.toString()+"ddnm"+pair.distance.toString());
       distance = sqrt(distance);
 
       if (pair.distance == -5 || distance < pair.distance) {
@@ -303,7 +301,8 @@ class Pair{
    double distance;
    String id;
    String imageUrl;
-   Pair(this.name,this.distance,this.id,this.imageUrl);
+   String image2;
+   Pair(this.name,this.distance,this.id,this.imageUrl,this.image2);
 }
 
 
